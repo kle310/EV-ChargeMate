@@ -1,0 +1,569 @@
+require("dotenv").config();
+const express = require("express");
+const axios = require("axios");
+const { Pool } = require("pg");
+const path = require("path");
+
+const app = express();
+const port = 3000;
+
+app.use(express.static("public"));
+
+const pool = new Pool({
+  user: process.env.PG_USER,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  password: process.env.PG_PASSWORD,
+  port: process.env.PG_PORT,
+});
+
+const initializeDataStructure = () => ({
+  Monday: Array(1440).fill(0),
+  Tuesday: Array(1440).fill(0),
+  Wednesday: Array(1440).fill(0),
+  Thursday: Array(1440).fill(0),
+  Friday: Array(1440).fill(0),
+  Saturday: Array(1440).fill(0),
+  Sunday: Array(1440).fill(0),
+});
+
+const fetchData = async () => {
+  const query = `
+    SELECT timestamp 
+    FROM station_status 
+    WHERE ocpp_status_1 = 'Available' AND ocpp_status_2 = 'Available' AND timestamp >= NOW() - INTERVAL '7 days'
+  `;
+  const result = await pool.query(query);
+  const data = initializeDataStructure();
+
+  result.rows.forEach(({ timestamp }) => {
+    const date = new Date(timestamp);
+    const day = date.toLocaleString("en-US", { weekday: "long" });
+    const minutes = date.getHours() * 60 + date.getMinutes();
+    if (data[day]) {
+      data[day][minutes] = 1;
+    }
+  });
+
+  return data;
+};
+
+app.get("/api/data", async (req, res) => {
+  try {
+    const data = await fetchData();
+    res.json(data);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+app.get("/api/1/status", async (req, res) => {
+  try {
+    const query = `
+      SELECT *
+      FROM station_status
+      WHERE timestamp >= NOW() - INTERVAL '1 days'
+      ORDER BY timestamp DESC;
+    `;
+    const { rows: filteredResults } = await pool.query(query);
+
+    if (!filteredResults.length) {
+      return res.json({ status: 0 });
+    }
+
+    const { ocpp_status_1, ocpp_status_2 } = filteredResults[0];
+
+    // Return status 0 if either Availability1 or Availability2 is in "Preparing" or "Unknown"
+    if (
+      ocpp_status_1.trim() === "Preparing" ||
+      ocpp_status_2.trim() === "Preparing"
+    ) {
+      return res.json({ status: 0 });
+    }
+
+    let row = filteredResults[0];
+    let progress = 0;
+
+    if (
+      row.ocpp_status_1.trim() === "Charging" ||
+      row.ocpp_status_2.trim() === "Charging"
+    ) {
+      for (let i = 0; i < filteredResults.length; i++) {
+        let row = filteredResults[i];
+
+        if (
+          row.ocpp_status_1.trim() === "Charging" ||
+          row.ocpp_status_2.trim() === "Charging"
+        ) {
+          progress -= 1;
+        } else {
+          // return progress
+          return res.json({ status: progress });
+        }
+      }
+    }
+
+    if (
+      row.ocpp_status_1.trim() === "Available" ||
+      row.ocpp_status_2.trim() === "Available"
+    ) {
+      for (let i = 0; i < filteredResults.length; i++) {
+        let row = filteredResults[i];
+
+        if (
+          row.ocpp_status_1.trim() === "Available" ||
+          row.ocpp_status_2.trim() === "Available"
+        ) {
+          progress += 1;
+        } else {
+          return res.json({ status: progress });
+        }
+      }
+    }
+
+    return res.json({ status: 0 });
+  } catch (error) {
+    console.error("Error processing request:", error);
+    return res.status(500).json({ status: 0, error: "Internal Server Error" });
+  }
+});
+
+// app.get("/", (req, res) => {
+//   res.sendFile(path.join(__dirname, "public", "index.html"));
+// });
+
+app.get("/1", async (req, res) => {
+  try {
+    const response = await axios.get("http://khac.energy/api/1/status");
+    let condition = response.data.status;
+    const backgroundColor = condition > 0 ? "green" : "red";
+    condition = Math.abs(condition);
+    const linkUrl = "/1/raw";
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Status Page</title>
+        <style>
+          body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: ${backgroundColor};
+            color: white;
+            font-family: Arial, sans-serif;
+          }
+          .status {
+            font-size: 10rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: inherit;
+          }
+          a {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+          }
+        </style>
+      </head>
+      <body>
+        <a href="${linkUrl}">
+          <div class="status" id="statusNumber">${condition}</div>
+        </a>
+        <script>
+          async function updateStatus() {
+            try {
+              const response = await fetch('/api/1/status');
+              const data = await response.json();
+              let condition = data.status;
+              const backgroundColor = condition > 0 ? 'green' : 'red';
+              condition = Math.abs(condition);
+              document.body.style.backgroundColor = backgroundColor;
+              document.getElementById('statusNumber').textContent = condition;
+            } catch (error) {
+              console.error('Error fetching status:', error);
+            }
+          }
+          setInterval(updateStatus, 30000);
+          updateStatus();
+        </script>
+      </body>
+      </html>
+    `;
+    res.send(htmlContent);
+  } catch (error) {
+    console.error("Error fetching condition status:", error);
+    res.status(500).send("<h1>Internal Server Error</h1>");
+  }
+});
+
+app.get("/1/raw", async (req, res) => {
+  try {
+    const query = `
+      SELECT *
+      FROM station_status
+      WHERE timestamp >= NOW() - INTERVAL '7 days'
+      ORDER BY timestamp DESC;
+    `;
+    const { rows: filteredResults } = await pool.query(query);
+
+    if (!filteredResults.length) {
+      return res.send("<p>No data available for the last week.</p>");
+    }
+
+    const tableHeaders = Object.keys(filteredResults[0]);
+    let table =
+      '<table border="1" style="border-collapse: collapse; width: 100%;">';
+
+    table += "<tr>";
+    tableHeaders.forEach((header) => {
+      table += `<th>${header}</th>`;
+    });
+    table += "</tr>";
+
+    filteredResults.forEach((row) => {
+      let rowColor = "";
+
+      if (
+        row.ocpp_status_1?.trim() === "Available" &&
+        row.ocpp_status_2?.trim() === "Available"
+      ) {
+        rowColor = 'style="background-color: green; color: white;"';
+      }
+
+      table += `<tr ${rowColor}>`;
+      tableHeaders.forEach((header) => {
+        let cellContent = row[header];
+
+        if (header.toLowerCase() === "timestamp") {
+          cellContent = new Date(cellContent).toLocaleString("en-US", {
+            weekday: "short",
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
+        }
+
+        table += `<td>${cellContent || ""}</td>`;
+      });
+      table += "</tr>";
+    });
+
+    table += "</table>";
+
+    res.send(`
+      <html>
+        <head>
+          <title>11107 Nebraska Avessss</title>
+          <style>
+            table {
+              text-align: left;
+            }
+            th, td {
+              padding: 8px;
+            }
+            h1 {
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>11107 Nebraska Ave</h1>
+          ${table}
+          <p><a href="/about">Learn more about this station</a></p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("Error processing request:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+app.get("/1/availability", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "availability.html"));
+});
+
+app.get("/", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free SoCal Fast Chargers</title>
+    
+    <!-- Google Tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NQVYSLJQ1W"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-NQVYSLJQ1W');
+    </script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            background-color: #f9f9f9;
+            color: #333;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            border-bottom: none;
+        }
+
+        .tab:hover, .tab.active {
+            background-color: #fff;
+            border-bottom: 2px solid #fff;
+            color: #2c3e50;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #2c3e50;
+            color: #fff;
+        }
+    </style>
+
+    <script>
+        function showTab(event, tabId) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Free SoCal Fast Chargers</h1>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab(event, 'chargers')">Chargers</button>
+            <button class="tab" onclick="showTab(event, 'about')">About</button>
+        </div>
+
+        <section id="chargers" class="tab-content active">
+            <article>
+                <h2>Overview</h2>
+                <p>LADWP offers free fast chargers with a 30-minute usage limit. However, the official app doesn’t provide session duration details, requiring users to leave their vehicles to check the charger’s screen. I developed an app to track and display session durations for improved convenience.</p>
+            </article>
+
+            <article>
+                <h2>Comparison</h2>
+                <h3>Official App</h3>
+                <p>No way to tell how long this person has been charging.</p>
+                <img src="/shell.jpeg" alt="Screenshot of the official app showing no duration info" />
+
+                <h3>My App</h3>
+                <p>Charger in use for 17 minutes:</p>
+                <img src="/busy.jpeg" alt="App showing charger in use for 17 minutes" />
+                <p>Charger available for 3 minutes:</p>
+                <img src="/available.jpeg" alt="App showing charger available for 3 minutes" />
+            </article>
+
+            <article>
+                <h2>Charger Locations</h2>
+                <ul>
+                    <li><a href="/1">11107 Nebraska Ave</a></li>
+                    <li>1394 S Sepulveda Blvd</li>
+                    <li>293 S Bentley Ave</li>
+                </ul>
+            </article>
+
+            <article>
+                <h2>Tech Stack</h2>
+                <p>Node.js + Express, PostgreSQL, Docker, PM2, Ubuntu</p>
+            </article>
+
+            <article>
+                <h2>To-Do</h2>
+                <ul>
+                    <li><a href="/1/availability">Availability Heatmap</a></li>
+                    <li>Predictions</li>
+                    <li>iOS app</li>
+                </ul>
+            </article>
+        </section>
+
+        <section id="about" class="tab-content">
+            <h2>Currently Seeking Opportunities</h2>
+            <p>Hello, I am actively looking for new opportunities. Please reach out via <a href="https://www.linkedin.com/in/khacle/" target="_blank">LinkedIn</a> or <a href="mailto:khacle@gmail.com">email</a>.</p>
+            <div class="section">
+        <h2>Work Experience</h2>
+
+        <h3>Stealth Startup</h3>
+        <p><strong>QA Lead</strong> - Remote (Oct 2023 – Mar 2024)</p>
+        <ul>
+            <li>Developed and implemented QA test plans, strategies, and processes as the sole QA owner.</li>
+            <li>Implemented a CI/CD pipeline to automate build, deployment, and testing processes.</li>
+            <li>Contributed as a backend engineer by fixing bugs and developing RESTful APIs within a Node.js backend, integrating them with HubSpot workflows.</li>
+            <li>Tech Stack: React, Tailwind CSS, Node.js, GraphQL, EC2, RDS - MySQL, Sequelize, CloudWatch, GitHub Actions, CodeDeploy, Playwright, Postman.</li>
+        </ul>
+
+        <p><strong>Co-Founder</strong> - Los Angeles, CA (Nov 2021 – Sep 2023)</p>
+        <ul>
+            <li>Founded a company focused on identifying effective automated tests and determining their ROI for businesses.</li>
+            <li>Streamlined testing processes, improved efficiency, and maximized ROI through advanced analytics.</li>
+        </ul>
+
+        <h3>Coursera</h3>
+        <p><strong>Senior QE Manager</strong> - Mountain View, CA (Jan 2019 – Oct 2021)</p>
+        <ul>
+            <li>Built the entire QE organization from the ground up as the Head of QE.</li>
+            <li>Managed SDET and QA teams of 15 members, overseeing hiring, coaching, and mentoring.</li>
+            <li>Elevated product quality to IPO standards through automated testing and continuous deployment capabilities.</li>
+            <li>Increased UI/API test coverage from <10% to >90% and unit test coverage from <50% to >80%.</li>
+            <li>Reduced blocker bugs to less than 1 per quarter and critical bugs to less than 3 per quarter.</li>
+            <li>Implemented engineering best practices, incident management, and defect prevention initiatives.</li>
+        </ul>
+
+        <h3>LinkedIn</h3>
+        <p><strong>QA Manager</strong> - Mountain View, CA (Sep 2012 – Oct 2018)</p>
+        <ul>
+            <li>Led multiple teams of SDET and QA engineers to ensure high-quality product deliveries.</li>
+            <li>Collaborated with cross-functional teams to integrate testing into the development process.</li>
+            <li>Contributed to initiatives like transitioning from monolith to microservices, localization, GDPR compliance, and accessibility enhancements.</li>
+        </ul>
+        
+        <p><strong>QA Lead</strong> (Oct 2011 – Sep 2012)</p>
+        <ul>
+            <li>Owned QA for the Job Posting product, overseeing its launch (0 → 1) and evolution.</li>
+        </ul>
+        
+        <p><strong>QA Engineer</strong> (Nov 2010 – Oct 2011)</p>
+        <ul>
+            <li>Led QA for the Recruiter product launch and subsequent updates.</li>
+            <li>Handled requirements gathering, test planning, functional testing, cross-browser testing, integration testing, performance testing, regression automation, and release management.</li>
+        </ul>
+
+        <h3>Ziosoft</h3>
+        <p><strong>Lead Automation Engineer</strong> - Redwood City, CA (Sep 2008 – Nov 2010)</p>
+        <ul>
+            <li>Designed and implemented functional and performance test frameworks for web and Windows desktop applications using Selenium, Eggplant, SilkTest, and AutoItX.</li>
+        </ul>
+
+        <h3>AOL</h3>
+        <p><strong>QA Engineer</strong> - Mountain View, CA (Oct 2006 – Sep 2008)</p>
+        <ul>
+            <li>Implemented automated UI testing by designing a custom UI testing framework using WATIR/WebDriver, significantly reducing test cycles from one month to two weeks.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Education</h2>
+        <p><strong>University of California, Irvine</strong> - BS, Information & Computer Science</p>
+    </div>
+    
+    <div class="section">
+        <h2>Certifications & Skills</h2>
+        <p><strong>Certifications:</strong> Foundations of Project Management (Google, Apr 2024), Generative AI for Everyone (DeepLearning.AI, Apr 2024), AWS Cloud Technical Essentials (AWS, Jan 2024), Promptly for Beginners: Build a Generative AI App (Coursera, Jan 2024), Crash Course on Python (Google, Oct 2023), Microservices - Fundamentals (IBM, Dec 2019).</p>
+        <p><strong>Skills:</strong> Programming Languages (Python, Java, JavaScript, Typescript, Ruby, Groovy, HTML5, CSS3, SQL), UI Automation (Playwright, Puppeteer, Jest, Selenium, Cypress, Watir, AutoIt, Eggplant, Appium), Backend Automation (Postman, Custom Frameworks), and more.</p>
+    </div>
+
+        
+    </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Free SoCal Fast Chargers. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>
+  `);
+});
+
+app.listen(port, () =>
+  console.log(`Server running at http://localhost:${port}`)
+);
