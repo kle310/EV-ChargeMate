@@ -5,6 +5,7 @@ const {
 } = require("../models/stationModel");
 const { generateStatusPage } = require("../views/statusView");
 const { generateAvailabilityPage } = require("../views/availabilityView");
+const { generatePage, generateTable } = require("../views/stationView");
 
 const handleRequest = async (req, res, fetchFunction, responseHandler) => {
   try {
@@ -56,21 +57,24 @@ const getAvailabilityPage = (req, res) => {
   );
 };
 
-const getStats = async (req, res) => {
-  try {
+const getStationData = (req, res) => {
+  handleRequest(req, res, fetchStationData, (res, data) => res.json(data));
+};
+
+const getStationPage = (req, res) => {
+  handleRequest(req, res, fetchStationData, (res, stationData) => {
     const { station_id } = req.params; // Extract station_id from the URL
-    const data = await fetchStationStatus(station_id);
-    res.json(data);
-  } catch (error) {
-    console.error("Error fetching available stations:", error);
-    res.status(500).send("Internal Server Error");
-  }
+    const table = generateTable(stationData);
+    const page = generatePage(station_id, table);
+    res.send(page);
+  });
 };
 
 module.exports = {
   getStatus,
-  getStats,
+  getStationData,
   getAvailability,
   getStatusPage,
   getAvailabilityPage,
+  getStationPage,
 };

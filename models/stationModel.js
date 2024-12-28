@@ -74,82 +74,133 @@ const fetchStationAvailability = async (station_id, interval = "7 days") => {
 
 const fetchStationStatus = async (station_id) => {
   const query = `
-    SELECT *
+    SELECT ocpp_status_1 as chademo, ocpp_status_2 as ccs
     FROM station_status
     WHERE station_id = $1 AND 
     timestamp >= NOW() - INTERVAL '1 days'
     ORDER BY timestamp DESC;
   `;
 
-  const { rows: filteredResults } = await pool.query(query, [station_id]); // Pass station_id as an array element
+  const { rows: filteredResults } = await pool.query(query, [station_id]);
 
   if (!filteredResults.length) {
     return { status: 0 };
   }
 
-  const { ocpp_status_1, ocpp_status_2 } = filteredResults[0];
+  const invalidStatuses = ["Preparing", "Unknown"];
+  const { chademo, ccs } = filteredResults[0];
 
-  // Return status 0 if either Availability1 or Availability2 is in "Preparing" or "Unknown"
+  // Early exit if either status is invalid
   if (
-    ocpp_status_1.trim() === "Preparing" ||
-    ocpp_status_2.trim() === "Preparing"
+    [chademo, ccs].some((status) => invalidStatuses.includes(status.trim()))
   ) {
     return { status: 0 };
   }
 
-  let row = filteredResults[0];
   let progress = 0;
 
-  if (
-    row.ocpp_status_1.trim() === "Charging" ||
-    row.ocpp_status_2.trim() === "Charging"
-  ) {
-    for (let i = 0; i < filteredResults.length; i++) {
-      let row = filteredResults[i];
-
-      if (
-        row.ocpp_status_1.trim() === "Charging" ||
-        row.ocpp_status_2.trim() === "Charging"
-      ) {
-        progress -= 1;
+  // Helper to calculate progress based on status
+  const calculateProgress = (status, adjustment) => {
+    for (const { chademo, ccs } of filteredResults) {
+      if ([chademo.trim(), ccs.trim()].includes(status)) {
+        progress += adjustment;
       } else {
-        // return progress
         return { status: progress };
       }
     }
+    return { status: progress }; // Fallback if no early return
+  };
+
+  // Determine progress adjustment based on initial status
+  const initialStatus = [chademo.trim(), ccs.trim()];
+  if (initialStatus.includes("Charging")) {
+    return calculateProgress("Charging", -1);
   }
 
-  if (
-    row.ocpp_status_1.trim() === "Available" ||
-    row.ocpp_status_2.trim() === "Available"
-  ) {
-    for (let i = 0; i < filteredResults.length; i++) {
-      let row = filteredResults[i];
-
-      if (
-        row.ocpp_status_1.trim() === "Available" ||
-        row.ocpp_status_2.trim() === "Available"
-      ) {
-        progress += 1;
-      } else {
-        return { status: progress };
-      }
-    }
+  if (initialStatus.includes("Available")) {
+    return calculateProgress("Available", 1);
   }
 
   return { status: 0 };
 };
 
+// const fetchStationData = async (station_id, interval = "7 days") => {
+//   const query = `
+//     SELECT ocpp_status_1 as chademo, ocpp_status_2 as ccs, timestamp
+//     FROM station_status
+//     WHERE station_id = $1 AND
+//     timestamp >= NOW() - INTERVAL '${interval}'
+//     ORDER BY timestamp DESC;
+//   `;
+//   const result = await pool.query(query, [station_id]); // Only pass station_id as a parameter
+//   return result.rows;
+//   // return result;
+// };
 const fetchStationData = async (station_id, interval = "7 days") => {
   const query = `
-    SELECT *
+    SELECT ocpp_status_1 as chademo, ocpp_status_2 as ccs, timestamp
     FROM station_status
     WHERE station_id = $1 AND 
-    timestamp >= NOW() - INTERVAL $2
-    ORDER BY timestamp DESC;
+    ocpp_status_1 IN ('Charging', 'Available') OR ocpp_status_2 IN ('Charging', 'Available') AND
+    timestamp >= NOW() - INTERVAL '${interval}'
+    ORDER BY timestamp ASC; -- Ascending to calculate duration correctly
   `;
-  const result = await pool.query(query);
-  return result.rows;
+  const result = await pool.query(query, [station_id]);
+
+  const rows = result.rows;
+  const mergedData = [];
+
+  if (rows.length > 0) {
+    let startTime = rows[0].timestamp;
+    let endTime = rows[0].timestamp;
+    let currentCcs = rows[0].ccs;
+    let currentChademo = rows[0].chademo;
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.ccs === currentCcs && row.chademo === currentChademo) {
+        endTime = row.timestamp; // Extend the duration
+      } else {
+        // Calculate duration and push merged group with start time
+        const duration = Math.round((endTime - startTime) / 60000); // Round duration
+        if (duration >= 5) {
+          // Filter out durations less than 5
+          mergedData.push({
+            chademo: currentChademo,
+            ccs: currentCcs,
+            startTime: startTime, // Include the start time
+            duration: duration,
+          });
+        }
+
+        // Reset for the new group
+        currentCcs = row.ccs;
+        currentChademo = row.chademo;
+        startTime = row.timestamp;
+        endTime = row.timestamp;
+      }
+    }
+
+    // Calculate and push the final group with start time
+    const finalDuration = Math.round((endTime - startTime) / 60000); // Round duration
+    if (finalDuration >= 5) {
+      // Filter out durations less than 5
+      mergedData.push({
+        chademo: currentChademo,
+        ccs: currentCcs,
+        startTime: startTime, // Include the start time
+        duration: finalDuration,
+      });
+    }
+  }
+
+  // Remove rows where duration is empty or less than 5
+  const filteredData = mergedData.filter(
+    (row) => row.duration && row.duration >= 5
+  );
+
+  // Reverse the merged data (so most recent groups come first)
+  return filteredData.reverse();
 };
 
 module.exports = {
