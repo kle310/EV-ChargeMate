@@ -1,305 +1,7 @@
-require("dotenv").config();
-const express = require("express");
-const axios = require("axios");
-const { Pool } = require("pg");
-const path = require("path");
+const generateHomePage = () => {
+  return `
 
-const app = express();
-const port = 3000;
-
-app.use(express.static("public"));
-
-const pool = new Pool({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
-});
-
-const initializeDataStructure = () => ({
-  Monday: Array(1440).fill(0),
-  Tuesday: Array(1440).fill(0),
-  Wednesday: Array(1440).fill(0),
-  Thursday: Array(1440).fill(0),
-  Friday: Array(1440).fill(0),
-  Saturday: Array(1440).fill(0),
-  Sunday: Array(1440).fill(0),
-});
-
-const fetchData = async () => {
-  const query = `
-    SELECT timestamp 
-    FROM station_status 
-    WHERE ocpp_status_1 = 'Available' AND ocpp_status_2 = 'Available' AND timestamp >= NOW() - INTERVAL '7 days'
-  `;
-  const result = await pool.query(query);
-  const data = initializeDataStructure();
-
-  result.rows.forEach(({ timestamp }) => {
-    const date = new Date(timestamp);
-    const day = date.toLocaleString("en-US", { weekday: "long" });
-    const minutes = date.getHours() * 60 + date.getMinutes();
-    if (data[day]) {
-      data[day][minutes] = 1;
-    }
-  });
-
-  return data;
-};
-
-app.get("/api/data", async (req, res) => {
-  try {
-    const data = await fetchData();
-    res.json(data);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-app.get("/api/1/status", async (req, res) => {
-  try {
-    const query = `
-      SELECT *
-      FROM station_status
-      WHERE timestamp >= NOW() - INTERVAL '1 days'
-      ORDER BY timestamp DESC;
-    `;
-    const { rows: filteredResults } = await pool.query(query);
-
-    if (!filteredResults.length) {
-      return res.json({ status: 0 });
-    }
-
-    const { ocpp_status_1, ocpp_status_2 } = filteredResults[0];
-
-    // Return status 0 if either Availability1 or Availability2 is in "Preparing" or "Unknown"
-    if (
-      ocpp_status_1.trim() === "Preparing" ||
-      ocpp_status_2.trim() === "Preparing"
-    ) {
-      return res.json({ status: 0 });
-    }
-
-    let row = filteredResults[0];
-    let progress = 0;
-
-    if (
-      row.ocpp_status_1.trim() === "Charging" ||
-      row.ocpp_status_2.trim() === "Charging"
-    ) {
-      for (let i = 0; i < filteredResults.length; i++) {
-        let row = filteredResults[i];
-
-        if (
-          row.ocpp_status_1.trim() === "Charging" ||
-          row.ocpp_status_2.trim() === "Charging"
-        ) {
-          progress -= 1;
-        } else {
-          // return progress
-          return res.json({ status: progress });
-        }
-      }
-    }
-
-    if (
-      row.ocpp_status_1.trim() === "Available" ||
-      row.ocpp_status_2.trim() === "Available"
-    ) {
-      for (let i = 0; i < filteredResults.length; i++) {
-        let row = filteredResults[i];
-
-        if (
-          row.ocpp_status_1.trim() === "Available" ||
-          row.ocpp_status_2.trim() === "Available"
-        ) {
-          progress += 1;
-        } else {
-          return res.json({ status: progress });
-        }
-      }
-    }
-
-    return res.json({ status: 0 });
-  } catch (error) {
-    console.error("Error processing request:", error);
-    return res.status(500).json({ status: 0, error: "Internal Server Error" });
-  }
-});
-
-// app.get("/", (req, res) => {
-//   res.sendFile(path.join(__dirname, "public", "index.html"));
-// });
-
-app.get("/1", async (req, res) => {
-  try {
-    const response = await axios.get("http://khac.energy/api/1/status");
-    let condition = response.data.status;
-    const backgroundColor = condition > 0 ? "green" : "red";
-    condition = Math.abs(condition);
-    const linkUrl = "/1/raw";
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Status Page</title>
-        <style>
-          body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: ${backgroundColor};
-            color: white;
-            font-family: Arial, sans-serif;
-          }
-          .status {
-            font-size: 10rem;
-            font-weight: bold;
-            text-decoration: none;
-            color: inherit;
-          }
-          a {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-decoration: none;
-            color: inherit;
-          }
-        </style>
-      </head>
-      <body>
-        <a href="${linkUrl}">
-          <div class="status" id="statusNumber">${condition}</div>
-        </a>
-        <script>
-          async function updateStatus() {
-            try {
-              const response = await fetch('/api/1/status');
-              const data = await response.json();
-              let condition = data.status;
-              const backgroundColor = condition > 0 ? 'green' : 'red';
-              condition = Math.abs(condition);
-              document.body.style.backgroundColor = backgroundColor;
-              document.getElementById('statusNumber').textContent = condition;
-            } catch (error) {
-              console.error('Error fetching status:', error);
-            }
-          }
-          setInterval(updateStatus, 30000);
-          updateStatus();
-        </script>
-      </body>
-      </html>
-    `;
-    res.send(htmlContent);
-  } catch (error) {
-    console.error("Error fetching condition status:", error);
-    res.status(500).send("<h1>Internal Server Error</h1>");
-  }
-});
-
-app.get("/1/raw", async (req, res) => {
-  try {
-    const query = `
-      SELECT *
-      FROM station_status
-      WHERE timestamp >= NOW() - INTERVAL '7 days'
-      ORDER BY timestamp DESC;
-    `;
-    const { rows: filteredResults } = await pool.query(query);
-
-    if (!filteredResults.length) {
-      return res.send("<p>No data available for the last week.</p>");
-    }
-
-    const tableHeaders = Object.keys(filteredResults[0]);
-    let table =
-      '<table border="1" style="border-collapse: collapse; width: 100%;">';
-
-    table += "<tr>";
-    tableHeaders.forEach((header) => {
-      table += `<th>${header}</th>`;
-    });
-    table += "</tr>";
-
-    filteredResults.forEach((row) => {
-      let rowColor = "";
-
-      if (
-        row.ocpp_status_1?.trim() === "Available" &&
-        row.ocpp_status_2?.trim() === "Available"
-      ) {
-        rowColor = 'style="background-color: green; color: white;"';
-      }
-
-      table += `<tr ${rowColor}>`;
-      tableHeaders.forEach((header) => {
-        let cellContent = row[header];
-
-        if (header.toLowerCase() === "timestamp") {
-          cellContent = new Date(cellContent).toLocaleString("en-US", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          });
-        }
-
-        table += `<td>${cellContent || ""}</td>`;
-      });
-      table += "</tr>";
-    });
-
-    table += "</table>";
-
-    res.send(`
-      <html>
-        <head>
-          <title>11107 Nebraska Avessss</title>
-          <style>
-            table {
-              text-align: left;
-            }
-            th, td {
-              padding: 8px;
-            }
-            h1 {
-              text-align: center;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>11107 Nebraska Ave</h1>
-          ${table}
-          <p><a href="/about">Learn more about this station</a></p>
-        </body>
-      </html>
-    `);
-  } catch (error) {
-    console.error("Error processing request:", error);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-app.get("/1/availability", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "availability.html"));
-});
-
-app.get("/", (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -455,7 +157,7 @@ app.get("/", (req, res) => {
             <article>
                 <h2>Charger Locations</h2>
                 <ul>
-                    <li><a href="/1">11107 Nebraska Ave</a></li>
+                    <li><a href="/418">11107 Nebraska Ave</a></li>
                     <li>1394 S Sepulveda Blvd</li>
                     <li>293 S Bentley Ave</li>
                 </ul>
@@ -469,7 +171,7 @@ app.get("/", (req, res) => {
             <article>
                 <h2>To-Do</h2>
                 <ul>
-                    <li><a href="/1/availability">Availability Heatmap</a></li>
+                    <li><a href="/418/availability">Availability Heatmap</a></li>
                     <li>Predictions</li>
                     <li>iOS app</li>
                 </ul>
@@ -551,7 +253,6 @@ app.get("/", (req, res) => {
         <p><strong>Skills:</strong> Programming Languages (Python, Java, JavaScript, Typescript, Ruby, Groovy, HTML5, CSS3, SQL), UI Automation (Playwright, Puppeteer, Jest, Selenium, Cypress, Watir, AutoIt, Eggplant, Appium), Backend Automation (Postman, Custom Frameworks), and more.</p>
     </div>
 
-        
     </div>
         </section>
     </div>
@@ -561,9 +262,8 @@ app.get("/", (req, res) => {
     </footer>
 </body>
 </html>
-  `);
-});
 
-app.listen(port, () =>
-  console.log(`Server running at http://localhost:${port}`)
-);
+  `;
+};
+
+module.exports = generateHomePage;
