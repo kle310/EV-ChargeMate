@@ -10,6 +10,40 @@ const initializeDataStructure = () => ({
   Sunday: Array(1440).fill(0),
 });
 
+const processDataStructure = (data) => {
+  const processDay = (dayArray) => {
+    let count = 0;
+
+    for (let i = 0; i < dayArray.length; i++) {
+      if (dayArray[i] === 1) {
+        count++;
+        if (count >= 5) continue; // Keep 1s if at least 5 consecutive
+      } else {
+        if (count < 5) {
+          // Flip the last `count` 1s back to 0
+          for (let j = i - 1; j >= i - count; j--) {
+            dayArray[j] = 0;
+          }
+        }
+        count = 0; // Reset the counter
+      }
+    }
+
+    // Handle case where the array ends with a streak of 1s less than 5
+    if (count < 5) {
+      for (let j = dayArray.length - 1; j >= dayArray.length - count; j--) {
+        dayArray[j] = 0;
+      }
+    }
+  };
+
+  for (const day in data) {
+    processDay(data[day]);
+  }
+
+  return data;
+};
+
 const fetchStationAvailability = async (station_id, interval = "7 days") => {
   const query = `
     SELECT timestamp 
@@ -30,6 +64,10 @@ const fetchStationAvailability = async (station_id, interval = "7 days") => {
       data[day][minutes] = 1;
     }
   });
+
+  processDataStructure(data);
+
+  //massage the data to be in the format that the front end expects
 
   return data;
 };

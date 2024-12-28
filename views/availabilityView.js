@@ -17,6 +17,7 @@ const generateAvailabilityPage = (availabilityData) => {
             gtag('config', 'G-NQVYSLJQ1W');
         </script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     </head>
     <body>
         <h1>Weekly Availability</h1>
@@ -40,6 +41,10 @@ const generateAvailabilityPage = (availabilityData) => {
                     }
                 });
             });
+
+            // Calculate current time in minutes since midnight
+            const now = new Date();
+            const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
 
             // Create the chart
             const ctx = document.getElementById("heatmap").getContext("2d");
@@ -87,6 +92,23 @@ const generateAvailabilityPage = (availabilityData) => {
                     plugins: {
                         legend: {
                             display: false,
+                        },
+                        annotation: {
+                            annotations: {
+                                currentTimeLine: {
+                                    type: "line",
+                                    xMin: currentTimeInMinutes,
+                                    xMax: currentTimeInMinutes,
+                                    borderColor: "red",
+                                    borderWidth: 2,
+                                    label: {
+                                        display: true,
+                                        content: "Current Time",
+                                        position: "end",
+                                        yAdjust: 0, 
+                                    },
+                                },
+                            },
                         },
                     },
                 },
