@@ -123,25 +123,11 @@ const fetchStationStatus = async (station_id) => {
 
   return { status: 0 };
 };
-
-// const fetchStationData = async (station_id, interval = "7 days") => {
-//   const query = `
-//     SELECT ocpp_status_1 as chademo, ocpp_status_2 as ccs, timestamp
-//     FROM station_status
-//     WHERE station_id = $1 AND
-//     timestamp >= NOW() - INTERVAL '${interval}'
-//     ORDER BY timestamp DESC;
-//   `;
-//   const result = await pool.query(query, [station_id]); // Only pass station_id as a parameter
-//   return result.rows;
-//   // return result;
-// };
 const fetchStationData = async (station_id, interval = "7 days") => {
   const query = `
     SELECT ocpp_status_1 as chademo, ocpp_status_2 as ccs, timestamp
     FROM station_status
     WHERE station_id = $1 AND 
-    ocpp_status_1 IN ('Charging', 'Available') OR ocpp_status_2 IN ('Charging', 'Available') AND
     timestamp >= NOW() - INTERVAL '${interval}'
     ORDER BY timestamp ASC; -- Ascending to calculate duration correctly
   `;
@@ -149,6 +135,8 @@ const fetchStationData = async (station_id, interval = "7 days") => {
 
   const rows = result.rows;
   const mergedData = [];
+
+  const durationFilter = 4;
 
   if (rows.length > 0) {
     let startTime = rows[0].timestamp;
@@ -163,8 +151,7 @@ const fetchStationData = async (station_id, interval = "7 days") => {
       } else {
         // Calculate duration and push merged group with start time
         const duration = Math.round((endTime - startTime) / 60000); // Round duration
-        if (duration >= 5) {
-          // Filter out durations less than 5
+        if (duration >= durationFilter) {
           mergedData.push({
             chademo: currentChademo,
             ccs: currentCcs,
@@ -183,8 +170,7 @@ const fetchStationData = async (station_id, interval = "7 days") => {
 
     // Calculate and push the final group with start time
     const finalDuration = Math.round((endTime - startTime) / 60000); // Round duration
-    if (finalDuration >= 5) {
-      // Filter out durations less than 5
+    if (finalDuration >= durationFilter) {
       mergedData.push({
         chademo: currentChademo,
         ccs: currentCcs,
@@ -194,17 +180,29 @@ const fetchStationData = async (station_id, interval = "7 days") => {
     }
   }
 
-  // Remove rows where duration is empty or less than 5
   const filteredData = mergedData.filter(
-    (row) => row.duration && row.duration >= 5
+    (row) => row.duration && row.duration >= durationFilter
   );
 
   // Reverse the merged data (so most recent groups come first)
   return filteredData.reverse();
 };
 
+const fetchRawData = async (station_id, interval = "7 days") => {
+  const query = `
+    SELECT ocpp_status_1 as chademo, ocpp_status_2 as ccs, timestamp
+    FROM station_status
+    WHERE station_id = $1 AND 
+    timestamp >= NOW() - INTERVAL '${interval}'
+    ORDER BY timestamp DESC; -- Ascending to calculate duration correctly
+  `;
+  const result = await pool.query(query, [station_id]);
+  return result.rows;
+};
+
 module.exports = {
   fetchStationAvailability,
   fetchStationStatus,
   fetchStationData,
+  fetchRawData,
 };

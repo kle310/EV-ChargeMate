@@ -26,6 +26,7 @@ const generateTable = (filteredResults) => {
 
       if (header.toLowerCase() === "starttime") {
         cellContent = new Date(cellContent).toLocaleString("en-US", {
+          weekday: "long",
           hour: "2-digit",
           minute: "2-digit",
           hour12: true,

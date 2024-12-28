@@ -2,6 +2,7 @@ const {
   fetchStationAvailability,
   fetchStationData,
   fetchStationStatus,
+  fetchRawData,
 } = require("../models/stationModel");
 const { generateStatusPage } = require("../views/statusView");
 const { generateAvailabilityPage } = require("../views/availabilityView");
@@ -58,7 +59,7 @@ const getAvailabilityPage = (req, res) => {
 };
 
 const getStationData = (req, res) => {
-  handleRequest(req, res, fetchStationData, (res, data) => res.json(data));
+  handleRequest(req, res, fetchRawData, (res, data) => res.json(data));
 };
 
 const getStationPage = (req, res) => {
