@@ -13,10 +13,7 @@ const generateTable = (filteredResults) => {
   filteredResults.forEach((row) => {
     let rowColor = "";
 
-    if (
-      row.chademo?.trim() === "Available" &&
-      row.ccs?.trim() === "Available"
-    ) {
+    if (row.plug_status?.trim() === "Available") {
       rowColor = 'style="background-color: green; color: white;"';
     }
 
@@ -47,7 +44,7 @@ const generatePage = (station_id, table) => {
   return `
     <html>
       <head>
-        <title>11107 Nebraska Ave</title>
+        <title>${station_id} Stats</title>
         <style>
           table {
             text-align: left;
@@ -62,10 +59,9 @@ const generatePage = (station_id, table) => {
       </head>
       <body>
         <a href="/${station_id}/availability">
-        <h1>11107 Nebraska Ave</h1>
+        <h1>${station_id}</h1>
         </a>
         ${table}
-        <p><a href="/about">Learn more about this station</a></p>
       </body>
     </html>
   `;
