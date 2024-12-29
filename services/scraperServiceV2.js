@@ -22,7 +22,7 @@ const PG_CONFIG = {
 };
 
 const API_CONFIG = {
-  url: process.env.API_URL,
+  url: process.env.API_URL_2,
   headers: {
     Host: process.env.API_HEADERS_HOST,
     "Content-Type": process.env.API_HEADERS_CONTENT_TYPE,
