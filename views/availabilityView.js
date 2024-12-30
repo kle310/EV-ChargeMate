@@ -39,6 +39,13 @@ const generateAvailabilityPage = (availabilityData) => {
                             r: 5, // Bubble size (optional)
                         });
                     }
+                    else {
+                        datasets.push({
+                            x: minute, // Arbitrary minute
+                            y: dayIndex, // Arbitrary day
+                            r: 0, // Bubble size 0 (invisible)
+                        });
+                    }
                 });
             });
 
