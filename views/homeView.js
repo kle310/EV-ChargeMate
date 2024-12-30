@@ -131,11 +131,12 @@ const generateHomePage = () => {
 
     <div class="container">
         <div class="tabs">
-            <button class="tab active" onclick="showTab(event, 'chargers')">Chargers</button>
+            <button class="tab active" onclick="showTab(event, 'free')">Free</button>
+            <button class="tab" onclick="showTab(event, 'cheap')">Cheap</button>
             <button class="tab" onclick="showTab(event, 'about')">About</button>
         </div>
 
-        <section id="chargers" class="tab-content active">
+        <section id="free" class="tab-content active">
             <article>
                 <h2>Overview</h2>
                 <p>LADWP offers free fast chargers with a 30-minute usage limit. However, the official app doesn’t provide session duration details, requiring users to leave their vehicles to check the charger’s screen. I developed an app to track and display session durations for improved convenience.</p>
@@ -183,6 +184,29 @@ const generateHomePage = () => {
                     <li><s>Availability Heatmap</s></li>
                     <li>Predictions</li>
                     <li>iOS app</li>
+                </ul>
+            </article>
+        </section>
+
+         <section id="cheap" class="tab-content">
+
+            <article>
+                <h2>Locations</h2>
+                <ul>
+                    <li>4100 Market Place Drive, Monterey Park ($0.20/kWh)          
+                        <a href="/153420">50 kW</a>
+                        <a href="/153421">50 kW</a>
+                    </li>
+                    <li>64 E Glenarm St, Pasadena ($0.15/kWh)     
+                        <a href="/153528">175 kW</a>
+                        <a href="/153787">50 kW</a>
+                    </li>
+                    <li>410 Shoppers Lane, Pasadena ($0.15/kWh)          
+                        <a href="/15152B">150 kW</a>
+                        <a href="/15157B">150 kW</a>
+                        <a href="/15158B">150 kW</a>
+                    </li>
+                    
                 </ul>
             </article>
         </section>
