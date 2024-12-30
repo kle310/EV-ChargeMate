@@ -22,16 +22,16 @@ const generateAvailabilityPage = (availabilityData) => {
     <body>
         <h1>Weekly Availability</h1>
         <canvas id="heatmap" width="1000" height="400"></canvas>
-
         <script>
-        (function renderChart() {
+            (function renderChart() {
             const data = ${JSON.stringify(availabilityData)};
-            const days = Object.keys(data);
+            const dayOrder = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
             const datasets = [];
 
             // Map data into a scatter-like dataset for heatmap
-            days.forEach((day, dayIndex) => {
-                data[day].forEach((value, minute) => {
+            dayOrder.forEach((day, dayIndex) => {
+                const dayData = data[day] || []; // Handle missing days gracefully
+                dayData.forEach((value, minute) => {
                     if (value === 1) {
                         datasets.push({
                             x: minute, // Minutes as X-axis
@@ -70,9 +70,11 @@ const generateAvailabilityPage = (availabilityData) => {
                             },
                             ticks: {
                                 callback: function (value) {
-                                    const hours = Math.floor(value / 60);
+                                    const hours24 = Math.floor(value / 60);
                                     const minutes = value % 60;
-                                    return \`\${hours}:\${minutes.toString().padStart(2, "0")}\`;
+                                    const hours12 = hours24 % 12 || 12; // Convert to 12-hour format
+                                    const ampm = hours24 >= 12 ? "PM" : "AM"; // Determine AM/PM
+                                    return \`\${hours12}:\${minutes.toString().padStart(2, "0")} \${ampm}\`;
                                 },
                             },
                         },
@@ -84,14 +86,29 @@ const generateAvailabilityPage = (availabilityData) => {
                             },
                             ticks: {
                                 callback: function (value) {
-                                    return days[Math.floor(value)] || "";
+                                    return dayOrder[Math.floor(value)] || "";
                                 },
                             },
+                            reverse: true, // Ensures top-to-bottom ordering
                         },
                     },
                     plugins: {
                         legend: {
                             display: false,
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    const hours24 = Math.floor(value.x / 60);
+                                    const minutes = value.x % 60;
+                                    const hours12 = hours24 % 12 || 12; // Convert to 12-hour format
+                                    const ampm = hours24 >= 12 ? "PM" : "AM"; // Determine AM/PM
+                                    const time = \`\${hours12}:\${minutes.toString().padStart(2, "0")} \${ampm}\`;
+                                    const day = dayOrder[value.y];
+                                    return \`\${day}: \${time}\`;
+                                },
+                            },
                         },
                         annotation: {
                             annotations: {
@@ -105,7 +122,7 @@ const generateAvailabilityPage = (availabilityData) => {
                                         display: true,
                                         content: "Current Time",
                                         position: "end",
-                                        yAdjust: 0, 
+                                        yAdjust: 0,
                                     },
                                 },
                             },
@@ -113,7 +130,7 @@ const generateAvailabilityPage = (availabilityData) => {
                     },
                 },
             });
-        })();
+        })();              
         </script>
     </body>
     </html>

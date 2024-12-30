@@ -11,15 +11,16 @@ const initializeDataStructure = () => ({
 });
 
 const processDataStructure = (data) => {
+  const streak = 5;
   const processDay = (dayArray) => {
     let count = 0;
 
     for (let i = 0; i < dayArray.length; i++) {
       if (dayArray[i] === 1) {
         count++;
-        if (count >= 5) continue; // Keep 1s if at least 5 consecutive
+        if (count >= streak) continue; // Keep 1s if at least 5 consecutive
       } else {
-        if (count < 5) {
+        if (count < streak) {
           // Flip the last `count` 1s back to 0
           for (let j = i - 1; j >= i - count; j--) {
             dayArray[j] = 0;
@@ -30,7 +31,7 @@ const processDataStructure = (data) => {
     }
 
     // Handle case where the array ends with a streak of 1s less than 5
-    if (count < 5) {
+    if (count < streak) {
       for (let j = dayArray.length - 1; j >= dayArray.length - count; j--) {
         dayArray[j] = 0;
       }
