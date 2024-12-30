@@ -155,7 +155,7 @@ const generateHomePage = () => {
             </article>
 
             <article>
-                <h2>Charger Locations</h2>
+                <h2>Locations</h2>
                 <ul>
                     <li><a href="/12585A">LADWP DS-28</a></li>
                     <li>Northridge Fashion Center Pacific Theatres DCFC     
