@@ -58,7 +58,7 @@ const generateStatusPage = (status, station_id) => {
         const response = await fetch('/api/${station_id}/status');
         const data = await response.json();
         let condition = data.status;
-        const backgroundColor = condition > 0 ? 'green' : 'red';
+        const backgroundColor = condition > 0 ? 'green' : condition === 0 ? 'grey' : 'red';
         condition = Math.abs(condition);
         document.body.style.backgroundColor = backgroundColor;
         document.getElementById('statusNumber').textContent = condition;

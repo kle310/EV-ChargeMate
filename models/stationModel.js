@@ -136,7 +136,7 @@ const fetchStationData = async (station_id, interval = "7 days") => {
   const rows = result.rows;
   const mergedData = [];
 
-  const durationFilter = 4;
+  const durationFilter = 5;
 
   if (rows.length > 0) {
     let startTime = rows[0].timestamp;
