@@ -160,7 +160,7 @@ const generateHomePage = () => {
                 <ul>
                     <li><a href="/12585A">LADWP DS-28</a></li>
                     <li>Northridge Fashion Center Pacific Theatres DCFC     
-                        <a href="/2DWE-13"><s>13</s></a>
+                        <a href="/2DWE-13">13</a>
                         <a href="/2DWE-14">14</a>
                     </li>
                     <li>Glendale Galleria DCFC 
