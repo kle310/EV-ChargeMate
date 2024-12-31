@@ -5,8 +5,10 @@ const {
   fetchRawData,
 } = require("../models/stationModel");
 const { generateStatusPage } = require("../views/statusView");
-const { generateAvailabilityPage } = require("../views/availabilityView");
-const { generatePage, generateTable } = require("../views/stationView");
+const {
+  generateDetailedPage,
+  generateTable,
+} = require("../views/detailedView");
 
 const handleRequest = async (req, res, fetchFunction, responseHandler) => {
   try {
@@ -33,12 +35,6 @@ const getStatus = (req, res) => {
   handleRequest(req, res, fetchStationStatus, (res, data) => res.json(data));
 };
 
-const getAvailability = (req, res) => {
-  handleRequest(req, res, fetchStationAvailability, (res, data) =>
-    res.json(data)
-  );
-};
-
 const getStatusPage = (req, res) => {
   handleRequest(req, res, fetchStationStatus, (res, rows, station_id) => {
     let status = 0;
@@ -52,30 +48,21 @@ const getStatusPage = (req, res) => {
   });
 };
 
-const getAvailabilityPage = (req, res) => {
-  handleRequest(req, res, fetchStationAvailability, (res, data) =>
-    res.send(generateAvailabilityPage(data))
-  );
-};
-
-const getStationData = (req, res) => {
-  handleRequest(req, res, fetchRawData, (res, data) => res.json(data));
-};
-
-const getStationPage = (req, res) => {
-  handleRequest(req, res, fetchStationData, (res, stationData) => {
+const getDetailedView = async (req, res) => {
+  try {
     const { station_id } = req.params; // Extract station_id from the URL
-    const table = generateTable(stationData);
-    const page = generatePage(station_id, table);
+    const data = await fetchStationData(station_id); // Await the result of fetchStationAvailability
+    const table = generateTable(data);
+    const availability = await fetchStationAvailability(station_id);
+    const page = generateDetailedPage(availability, table);
     res.send(page);
-  });
+  } catch (error) {
+    res.status(500).send("Error fetching station data");
+  }
 };
 
 module.exports = {
   getStatus,
-  getStationData,
-  getAvailability,
   getStatusPage,
-  getAvailabilityPage,
-  getStationPage,
+  getDetailedView,
 };

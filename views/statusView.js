@@ -49,7 +49,7 @@ const generateStatusPage = (status, station_id) => {
   </style>
 </head>
 <body>
-  <a href="/${station_id}/stats">
+  <a href="/${station_id}/detailed">
     <div class="status" id="statusNumber">${condition}</div>
   </a>
   <script>

@@ -1,11 +1,11 @@
-const generateAvailabilityPage = (availabilityData) => {
+const generateDetailedPage = (availabilityData, table) => {
   return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Weekly Usage Heatmap</title>
+        <title>Availability</title>
         <!-- Google Tag (gtag.js) -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-NQVYSLJQ1W"></script>
         <script>
@@ -20,7 +20,7 @@ const generateAvailabilityPage = (availabilityData) => {
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     </head>
     <body>
-        <h1>Weekly Availability</h1>
+        <h1>Availability</h1>
         <canvas id="heatmap" width="1000" height="400"></canvas>
         <script>
             (function renderChart() {
@@ -52,6 +52,7 @@ const generateAvailabilityPage = (availabilityData) => {
             // Calculate current time in minutes since midnight
             const now = new Date();
             const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
+            const currentDayIndex = now.getDay(); // Get the current day of the week (0 - Sunday, 6 - Saturday)
 
             // Create the chart
             const ctx = document.getElementById("heatmap").getContext("2d");
@@ -72,9 +73,11 @@ const generateAvailabilityPage = (availabilityData) => {
                         x: {
                             type: "linear",
                             title: {
-                                display: true,
-                                text: "Minutes of the Day",
+                                display: false,
+                                text: "Time",
                             },
+                            min: 0, // Ensure minimum x-axis is at 00:00
+                        max: 1439, // Maximum value is 11:59 PM (1439 minutes)
                             ticks: {
                                 callback: function (value) {
                                     const hours24 = Math.floor(value / 60);
@@ -88,7 +91,7 @@ const generateAvailabilityPage = (availabilityData) => {
                         y: {
                             type: "linear",
                             title: {
-                                display: true,
+                                display: false,
                                 text: "Days of the Week",
                             },
                             ticks: {
@@ -132,6 +135,22 @@ const generateAvailabilityPage = (availabilityData) => {
                                         yAdjust: 0,
                                     },
                                 },
+                                todayLine: {
+                                type: "line",
+                                xMin: 0, // Start of the day
+                                xMax: 1439, // End of the day
+                                yMin: currentDayIndex, // Position the line slightly above the current day
+                                yMax: currentDayIndex, // Position the line slightly below the current day
+                                borderColor: "red",
+                                borderWidth: 2,
+                                label: {
+                                    display: true,
+                                    content: "Today",
+                                    position: "start",
+                                    xAdjust: 10,
+                                    yAdjust: 0,
+                                },
+                             },    
                             },
                         },
                     },
@@ -139,9 +158,50 @@ const generateAvailabilityPage = (availabilityData) => {
             });
         })();              
         </script>
+        <h1></h1>
+        ${table}
     </body>
     </html>
   `;
 };
 
-module.exports = { generateAvailabilityPage };
+// views/stationView.js
+const generateTable = (filteredResults) => {
+  const tableHeaders = Object.keys(filteredResults[0]);
+  let table =
+    '<table border="1" style="border-collapse: collapse; width: 100%;">';
+
+  table += "<tr><th>Status</th><th>Start Time</th><th>Duration</th>";
+  table += "</tr>";
+
+  filteredResults.forEach((row) => {
+    let rowColor = "";
+
+    if (row.plug_status?.trim() === "Available") {
+      rowColor = 'style="background-color: green; color: white;"';
+    }
+
+    table += `<tr ${rowColor}>`;
+    tableHeaders.forEach((header) => {
+      let cellContent = row[header];
+
+      if (header.toLowerCase() === "starttime") {
+        cellContent = new Date(cellContent).toLocaleString("en-US", {
+          weekday: "long",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      }
+
+      table += `<td>${cellContent || ""}</td>`;
+    });
+    table += "</tr>";
+  });
+
+  table += "</table>";
+
+  return table;
+};
+
+module.exports = { generateDetailedPage, generateTable };
