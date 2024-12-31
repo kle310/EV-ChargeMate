@@ -129,7 +129,7 @@ const generateDetailedPage = (availabilityData, table) => {
                                     borderColor: "red",
                                     borderWidth: 2,
                                     label: {
-                                        display: true,
+                                        display: false,
                                         content: "Current Time",
                                         position: "end",
                                         yAdjust: 0,
@@ -144,7 +144,7 @@ const generateDetailedPage = (availabilityData, table) => {
                                 borderColor: "red",
                                 borderWidth: 2,
                                 label: {
-                                    display: true,
+                                    display: false,
                                     content: "Today",
                                     position: "start",
                                     xAdjust: 10,
@@ -186,12 +186,26 @@ const generateTable = (filteredResults) => {
       let cellContent = row[header];
 
       if (header.toLowerCase() === "starttime") {
-        cellContent = new Date(cellContent).toLocaleString("en-US", {
+        const cellDate = new Date(cellContent);
+        const today = new Date();
+
+        // Check if the date part of `cellContent` matches today's date
+        const isToday =
+          cellDate.getFullYear() === today.getFullYear() &&
+          cellDate.getMonth() === today.getMonth() &&
+          cellDate.getDate() === today.getDate();
+
+        cellContent = cellDate.toLocaleString("en-US", {
           weekday: "long",
           hour: "2-digit",
           minute: "2-digit",
           hour12: true,
         });
+
+        if (isToday) {
+          // Replace the day of the week with "Today"
+          cellContent = cellContent.replace(/^[a-zA-Z]+/, "Today");
+        }
       }
 
       table += `<td>${cellContent || ""}</td>`;

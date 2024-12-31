@@ -175,13 +175,15 @@ const generateHomePage = () => {
 
             <article>
                 <h2>Tech Stack</h2>
-                <p>Node.js + Express, PostgreSQL, Docker, PM2, Ubuntu</p>
+                <p>Node.js + Express, PostgreSQL, Docker, PM2, Ubuntu, ChatGPT/Copilot, GitHub</p>
             </article>
 
             <article>
                 <h2>To-Do</h2>
+                
+                    <s>Availability Heatmap</s><br>
+                    <img src="/availability.jpeg" alt="App showing weekly availabilty" />
                 <ul>
-                    <li><s>Availability Heatmap</s></li>
                     <li>Predictions</li>
                     <li>iOS app</li>
                 </ul>
