@@ -34,3 +34,16 @@ const httpsServer = https.createServer(credentials, app);
 httpsServer.listen(443, () => {
   console.log("HTTPS Server running on port 443");
 });
+
+const http = require("http");
+
+// Create an HTTP server to redirect all traffic to HTTPS
+const httpServer = http.createServer((req, res) => {
+  res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
+  res.end();
+});
+
+// Listen on port 80 (HTTP)
+httpServer.listen(80, () => {
+  console.log("HTTP Server running on port 80 and redirecting to HTTPS");
+});
