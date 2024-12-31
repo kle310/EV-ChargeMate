@@ -132,7 +132,7 @@ const generateHomePage = () => {
     <div class="container">
         <div class="tabs">
             <button class="tab active" onclick="showTab(event, 'free')">Free</button>
-            <button class="tab" onclick="showTab(event, 'cheap')">Cheap</button>
+            <button class="tab" onclick="showTab(event, 'cheap')">Discounted</button>
             <button class="tab" onclick="showTab(event, 'about')">About</button>
         </div>
 
