@@ -126,7 +126,7 @@ const generateHomePage = () => {
 </head>
 <body>
     <header>
-        <h1>Free SoCal Fast Chargers (test)</h1>
+        <h1>Free SoCal Fast Chargers</h1>
     </header>
 
     <div class="container">
