@@ -184,21 +184,8 @@ const fetchStationData = async (station_id, interval = "7 days") => {
   return filteredData.reverse();
 };
 
-const fetchRawData = async (station_id, interval = "7 days") => {
-  const query = `
-    SELECT plug_status, timestamp
-    FROM station_status_2
-    WHERE station_id = $1 AND 
-    timestamp >= NOW() - INTERVAL '${interval}'
-    ORDER BY timestamp DESC; -- Ascending to calculate duration correctly
-  `;
-  const result = await pool.query(query, [station_id]);
-  return result.rows;
-};
-
 module.exports = {
   fetchStationAvailability,
   fetchStationStatus,
   fetchStationData,
-  fetchRawData,
 };
