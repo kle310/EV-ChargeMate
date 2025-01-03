@@ -107,7 +107,7 @@ async function insertStationData(client, stationId, data) {
     // Determine the status of the station
     const status = determinePortStatus(ccsPorts);
     // Insert status into the database
-    // await saveStationStatus(client, stationId, status);
+    await saveStationStatus(client, stationId, status);
   } catch (error) {
     console.error(`Error processing station ${stationId}:`, error);
   }
