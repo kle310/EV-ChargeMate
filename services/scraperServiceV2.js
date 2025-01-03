@@ -184,15 +184,13 @@ async function processStations() {
   }
 }
 
-processStations();
+// Schedule the job
+const job = new CronJob(
+  CRON_CONFIG.expression,
+  processStations,
+  null,
+  true,
+  CRON_CONFIG.timezone
+);
 
-// // Schedule the job
-// const job = new CronJob(
-//   CRON_CONFIG.expression,
-//   processStations,
-//   null,
-//   true,
-//   CRON_CONFIG.timezone
-// );
-
-// console.log("Cron job started with expression:", CRON_CONFIG.expression);
+console.log("Cron job started with expression:", CRON_CONFIG.expression);
