@@ -4,6 +4,7 @@ const { CronJob } = require("cron");
 
 // Constants
 const STATIONS = [
+  // free fast chargers
   { id: "12585A" },
   { id: "2DWE-13" },
   { id: "2DWE-14" },
@@ -12,6 +13,8 @@ const STATIONS = [
   { id: "2XZB-24" },
   { id: "2XZB-25" },
   { id: "2ZG5-01" },
+
+  // discounted fast chargers
   { id: "153420" },
   { id: "153421" },
   { id: "153528" },
@@ -25,6 +28,16 @@ const STATIONS = [
   { id: "153376" },
   { id: "153380" },
   { id: "153384" },
+
+  //free chargers
+  { id: "245F-01" },
+  { id: "245F-02" },
+  { id: "2N9O-01" },
+  { id: "2N9O-02" },
+  { id: "2GWB-01" },
+  { id: "2GWB-02" },
+  { id: "24XI-01" },
+  { id: "2GWB-03" },
 ];
 
 const PG_CONFIG = {
@@ -75,29 +88,74 @@ async function fetchStationData(stationId) {
   }
 }
 
-// Insert station data into the database
+// Refactored function to insert station data into the database
 async function insertStationData(client, stationId, data) {
-  const ports = data.data.evses?.[0]?.ports || [];
-  const ccsPorts = ports
-    .filter((port) => port.plugType === "CCS")
-    .map((port) => ({
-      plugType: port.plugType || null,
-      portOcppStatus: port.portOcppStatus || null,
-    }));
+  try {
+    const ports = data.data.evses?.[0]?.ports || [];
 
-  for (const port of ccsPorts) {
-    const query = `
-      INSERT INTO station_status_2 (station_id, plug_type, plug_status, timestamp)
-      VALUES ($1, $2, $3, $4);
-    `;
-    const values = [stationId, port.plugType, port.portOcppStatus, new Date()];
+    // Filter ports based on plug types and map them to the required format
+    const ccsPorts = ports
+      .filter(({ plugType }) =>
+        ["CCS", "CHAdeMO", "SAEJ1772"].includes(plugType)
+      )
+      .map(({ plugType, portOcppStatus, portStatus }) => ({
+        plugType: plugType || null,
+        portOcppStatus: portOcppStatus || null,
+        portStatus: portStatus || null,
+      }));
 
-    try {
-      await client.query(query, values);
-    } catch (error) {
-      console.error(`Error inserting data for station ${stationId}`, error);
-    }
+    // Determine the status of the station
+    const status = determinePortStatus(ccsPorts);
+    // Insert status into the database
+    // await saveStationStatus(client, stationId, status);
+  } catch (error) {
+    console.error(`Error processing station ${stationId}:`, error);
   }
+}
+
+// Function to determine the status of the station based on the ports
+function determinePortStatus(evses) {
+  if (evses[0].portStatus === "OFFLINE") {
+    return { plugType: evses[0].plugType, portOcppStatus: "Offline" };
+  }
+  if (evses.length > 1) {
+    const [firstPort, secondPort] = evses;
+
+    if (["Charging", "Faulted"].includes(firstPort.portOcppStatus)) {
+      return firstPort;
+    }
+
+    if (["Charging", "Faulted"].includes(secondPort.portOcppStatus)) {
+      return secondPort;
+    }
+
+    if (
+      firstPort.portOcppStatus === "Available" &&
+      secondPort.portOcppStatus === "Available"
+    ) {
+      return firstPort; // Choose any available port
+    }
+
+    return firstPort; // Default to the first port
+  }
+  return evses[0]; // Single port or no valid ports
+}
+
+// Function to save station status to the database
+async function saveStationStatus(client, stationId, status) {
+  const query = `
+    INSERT INTO station_status_2 (station_id, plug_type, plug_status, timestamp)
+    VALUES ($1, $2, $3, $4);
+  `;
+
+  const values = [
+    stationId,
+    status?.plugType || null,
+    status?.portOcppStatus || null,
+    new Date(),
+  ];
+
+  await client.query(query, values);
 }
 
 // Fetch and store status data for all stations
@@ -126,13 +184,15 @@ async function processStations() {
   }
 }
 
-// Schedule the job
-const job = new CronJob(
-  CRON_CONFIG.expression,
-  processStations,
-  null,
-  true,
-  CRON_CONFIG.timezone
-);
+processStations();
 
-console.log("Cron job started with expression:", CRON_CONFIG.expression);
+// // Schedule the job
+// const job = new CronJob(
+//   CRON_CONFIG.expression,
+//   processStations,
+//   null,
+//   true,
+//   CRON_CONFIG.timezone
+// );
+
+// console.log("Cron job started with expression:", CRON_CONFIG.expression);
