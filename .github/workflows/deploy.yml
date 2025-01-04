@@ -32,7 +32,7 @@ jobs:
             git pull origin main
           EOF
 
-  run-playwright-tests:
+  run-playwright-tests-on-staging:
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
 
