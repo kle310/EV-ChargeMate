@@ -29,10 +29,6 @@ jobs:
           npm run start &
           echo "Server started"
 
-      - name: Wait for the server to start
-        run: |
-          npx wait-on http://localhost:3000
-
       - name: Install Playwright browers
         run: |
           npx playwright install --with-deps
