@@ -2,9 +2,11 @@
   "name": "evc-tracker",
   "version": "1.0.0",
   "description": "ev charger tracking app",
-  "main": "server.js",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "test": "playwright test",
+    "test:report": "playwright show-report"
   },
   "author": "kle",
   "license": "ISC",
@@ -14,5 +16,8 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
   }
 }
