@@ -50,7 +50,7 @@ jobs:
 
       - name: Wait for the server to start
         run: |
-          npx wait-on http://localhost:3000  # Replace with your server's URL
+          npx wait-on http://localhost:3000
 
       - name: Install Playwright browers
         run: |
@@ -59,3 +59,10 @@ jobs:
       - name: Run Playwright tests
         run: |
           npm run test
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-artifacts
+          path: playwright-report
