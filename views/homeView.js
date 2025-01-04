@@ -147,7 +147,7 @@ const generateHomePage = () => {
             <article>
                 <h2>Comparison</h2>
                 <h3>Official App</h3>
-                <p>No way to tell how long this person has been charging.</p>
+                <p><b>Unknown Charging Duration:</b> It's not possible to determine how long this person has been charging.</p>
                 <img src="/shell.jpeg" alt="Screenshot of the official app showing no duration info" />
 
                 <h3>My App</h3>
