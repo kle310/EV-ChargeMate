@@ -48,7 +48,7 @@ const processDataStructure = (data) => {
 const fetchStationAvailability = async (station_id, interval = "7 days") => {
   const query = `
     SELECT timestamp 
-    FROM station_status_2 
+    FROM station_status 
     WHERE station_id = $1 AND
     plug_status = 'Available' AND timestamp >= NOW() - INTERVAL '${interval}';
   `;
@@ -75,7 +75,7 @@ const fetchStationAvailability = async (station_id, interval = "7 days") => {
 const fetchStationStatus = async (station_id) => {
   const query = `
     SELECT plug_status
-    FROM station_status_2
+    FROM station_status
     WHERE station_id = $1 AND 
     timestamp >= NOW() - INTERVAL '1 days'
     ORDER BY timestamp DESC;
@@ -125,7 +125,7 @@ const fetchStationStatus = async (station_id) => {
 const fetchStationData = async (station_id, interval = "7 days") => {
   const query = `
     SELECT plug_status, timestamp
-    FROM station_status_2
+    FROM station_status
     WHERE station_id = $1 AND 
     timestamp >= NOW() - INTERVAL '${interval}'
     ORDER BY timestamp ASC; -- Ascending to calculate duration correctly
