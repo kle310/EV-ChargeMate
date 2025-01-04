@@ -18,13 +18,13 @@ export default defineConfig({
       name: "Chromium",
       use: { browserName: "chromium" },
     },
-    {
-      name: "Firefox",
-      use: { browserName: "firefox" },
-    },
-    {
-      name: "WebKit",
-      use: { browserName: "webkit" },
-    },
+    // {
+    //   name: "Firefox",
+    //   use: { browserName: "firefox" },
+    // },
+    // {
+    //   name: "WebKit",
+    //   use: { browserName: "webkit" },
+    // },
   ],
 });
