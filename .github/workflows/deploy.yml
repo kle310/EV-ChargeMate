@@ -7,7 +7,7 @@ on:
       - staging # Trigger for staging branch
 
 jobs:
-  deploy:
+  deploy-to-production:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
@@ -54,7 +54,7 @@ jobs:
 
       - name: Install Playwright browers
         run: |
-          npx playwright install --with-deps
+          npx playwright install
 
       - name: Run Playwright tests
         run: |
