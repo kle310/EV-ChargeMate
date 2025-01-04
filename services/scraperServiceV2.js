@@ -36,8 +36,11 @@ const STATIONS = [
   { id: "2N9O-02" },
   { id: "2GWB-01" },
   { id: "2GWB-02" },
-  { id: "24XI-01" },
   { id: "2GWB-03" },
+  { id: "24XI-01" },
+  { id: "24XI-02" },
+  { id: "24XI-03" },
+  { id: "24XI-04" },
 ];
 
 const PG_CONFIG = {

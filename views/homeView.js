@@ -198,12 +198,33 @@ const generateHomePage = () => {
         <section id="freeL2" class="tab-content">
 
             <article>
-                <h2>Locations</h2>
-                <ul>
-                    
-                    
-                </ul>
-            </article>
+    <h2>Locations</h2>
+    <ul>
+        <li>
+            2121 Cloverfield Blvd
+            <a href="/245F-01">1</a>
+            <a href="/245F-01">2</a>
+        </li>
+        <li>
+            500 Wilshire Blvd
+            <a href="/2N9O-01">1</a>
+            <a href="/2N9O-02">2</a>
+        </li>
+        <li>
+            2201 Wilshire Blvd
+            <a href="/2GWB-01">1</a>
+            <a href="/2GWB-02">2</a>
+        </li>
+        <li>
+            11250 West Olympic Blvd
+            <a href="/24XI-01">1</a>
+            <a href="/24XI-02">2</a>
+            <a href="/24XI-03">3</a>
+            <a href="/24XI-04">4</a>
+        </li>
+    </ul>
+</article>
+
         </section>
 
          <section id="discounted" class="tab-content">
