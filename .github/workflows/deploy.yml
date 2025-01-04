@@ -15,6 +15,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install dependencies
+        run: |
+          npm install
+
       - name: Set up environment variables from secrets
         run: |
           echo "PG_HOST=${{ secrets.PG_HOST }}" >> $GITHUB_ENV
@@ -22,21 +26,6 @@ jobs:
           echo "PG_PASSWORD=${{ secrets.PG_PASSWORD }}" >> $GITHUB_ENV
           echo "PG_DATABASE=${{ secrets.PG_DATABASE }}" >> $GITHUB_ENV
           echo "PG_PORT=${{ secrets.PG_PORT }}" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        run: |
-          npm install
-
-      - name: Deploy app to staging server
-        env:
-          PG_HOST: $PG_HOST
-          PG_USER: $PG_USER
-          PG_PASSWORD: $PG_PASSWORD
-          PG_DATABASE: $PG_DATABASE
-          PG_PORT: $PG_PORT
-        run: |
-          echo "PG_HOST: $PG_HOST"
-          echo "PG_DATABASE: $PG_DATABASE"
 
       - name: Wait for the server to start
         run: |
