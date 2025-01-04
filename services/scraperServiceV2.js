@@ -147,7 +147,7 @@ function determinePortStatus(evses) {
 // Function to save station status to the database
 async function saveStationStatus(client, stationId, status) {
   const query = `
-    INSERT INTO station_status_2 (station_id, plug_type, plug_status, timestamp)
+    INSERT INTO station_status (station_id, plug_type, plug_status, timestamp)
     VALUES ($1, $2, $3, $4);
   `;
 
