@@ -44,6 +44,14 @@ jobs:
         run: |
           npm install
 
-      - name: Run Playwright Tests
+      - name: Deploy app to staging server
         run: |
-          npx playwright test
+          npm run start
+
+      - name: Install Playwright browers
+        run: |
+          npx playwright install
+
+      - name: Run Playwright tests
+        run: |
+          npm run test
