@@ -7,6 +7,41 @@ on:
       - staging # Trigger for staging branch
 
 jobs:
+  run-playwright-tests-on-staging:
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Deploy app to staging server
+        run: |
+          npm run start &
+
+      - name: Wait for the server to start
+        run: |
+          npx wait-on http://localhost:3000
+
+      - name: Install Playwright browers
+        run: |
+          npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: |
+          npm run test
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-artifacts
+          path: playwright-report
+
   deploy-to-production:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -31,38 +66,3 @@ jobs:
             cd code/evc-tracker
             git pull origin main
           EOF
-
-  run-playwright-tests-on-staging:
-    if: github.ref == 'refs/heads/staging'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
-        run: |
-          npm install
-
-      - name: Deploy app to staging server
-        run: |
-          npm run start &
-
-      - name: Wait for the server to start
-        run: |
-          npx wait-on http://localhost:3000
-
-      - name: Install Playwright browers
-        run: |
-          npx playwright install
-
-      - name: Run Playwright tests
-        run: |
-          npm run test
-
-      - name: Upload Playwright artifacts
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: playwright-artifacts
-          path: playwright-report
