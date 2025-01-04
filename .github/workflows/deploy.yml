@@ -19,15 +19,17 @@ jobs:
         run: |
           npm install
 
-      - name: Deploy app to staging server
+      - name: Set up environment variables from secrets and start the server
         run: |
+          export PG_HOST=${{ secrets.PG_HOST }}
+          export PG_USER=${{ secrets.PG_USER }}
+          export PG_PASSWORD=${{ secrets.PG_PASSWORD }}
+          export PG_DATABASE=${{ secrets.PG_DATABASE }}
+          export PG_PORT=${{ secrets.PG_PORT }}
           npm run start &
+          echo "Server started"
 
-      - name: Wait for the server to start
-        run: |
-          npx wait-on http://localhost:3000
-
-      - name: Install Playwright browers
+      - name: Install Playwright dependencies
         run: |
           npx playwright install --with-deps
 

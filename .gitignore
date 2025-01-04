@@ -130,3 +130,7 @@ dist
 .pnp.*
 .DS_Store
 public/.DS_Store
+
+#playwright tests
+playwright-report/
+playwright-results/
