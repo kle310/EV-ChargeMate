@@ -19,13 +19,14 @@ jobs:
         run: |
           npm install
 
-      - name: Set up environment from .env
-        run: |
-          if [ -f .env ]; then
-            export $(cat .env | xargs)
-          fi
-
       - name: Deploy app to staging server
+        env:
+          PG_USER: ${{ secrets.PG_USER }}
+          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          PG_HOST: ${{ secrets.PG_HOST }}
+          PG_DATABASE: ${{ secrets.PG_DATABASE }}
+          PG_PORT: ${{ secrets.PG_PORT }}
+
         run: |
           npm run start &
 
