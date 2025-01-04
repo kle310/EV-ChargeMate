@@ -160,8 +160,16 @@ const generateHomePage = () => {
             </article>
 
             <article>
-                <h2>Tech Stack</h2>
-                <p>Node.js + Express, NGINX, PostgreSQL, Docker, PM2, Ubuntu, ChatGPT/Copilot, GitHub</p>
+                <h2>Technology Stack</h2>
+                <p><strong>Backend/Frontend:</strong> Node.js with Express</p>
+                <p><strong>Database:</strong> PostgreSQL for relational data storage</p>
+                <p><strong>SSL:</strong> NGINX for SSL termination and reverse proxy</p>
+                <p><strong>Containerization:</strong> Docker for consistent environment setup and deployment</p>
+                <p><strong>Process Management:</strong> PM2 for managing Node.js processes in production</p>
+                <p><strong>Operating System:</strong> Ubuntu for server environment</p>
+                <p><strong>AI Assistance:</strong> ChatGPT and Copilot for development productivity and code suggestions</p>
+                <p><strong>CI/CD:</strong> Github Actions for continuous integration and deployment pipeline</p>
+                <p><strong>Testing:</strong> Playwright for end-to-end testing automation</p>
             </article>
 
             <article>
