@@ -96,8 +96,13 @@ const generateDetailedPage = (availabilityData, table) => {
                             },
                             ticks: {
                                 callback: function (value) {
-                                    return dayOrder[Math.floor(value)] || "";
-                                },
+                                const dayIndex = Math.floor(value);
+                                const dayName = dayOrder[dayIndex] || "";
+                                if (dayIndex === currentDayIndex) {
+                                    return "Today";
+                                }
+                                return dayName;
+                            },
                             },
                             reverse: true, // Ensures top-to-bottom ordering
                         },
@@ -171,7 +176,8 @@ const generateTable = (filteredResults) => {
   let table =
     '<table border="1" style="border-collapse: collapse; width: 100%;">';
 
-  table += "<tr><th>Status</th><th>Start Time</th><th>Duration</th>";
+  table +=
+    "<tr><th>Type</th><th>Status</th><th>Start Time</th><th>Duration</th>";
   table += "</tr>";
 
   filteredResults.forEach((row) => {

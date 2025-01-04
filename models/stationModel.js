@@ -65,10 +65,7 @@ const fetchStationAvailability = async (station_id, interval = "7 days") => {
     }
   });
 
-  processDataStructure(data);
-
-  //massage the data to be in the format that the front end expects
-
+  processDataStructure(data); //massage the data to be in the format that the front end expects
   return data;
 };
 
@@ -124,7 +121,7 @@ const fetchStationStatus = async (station_id) => {
 
 const fetchStationData = async (station_id, interval = "7 days") => {
   const query = `
-    SELECT plug_status, timestamp
+    SELECT plug_type, plug_status, timestamp
     FROM station_status
     WHERE station_id = $1 AND 
     timestamp >= NOW() - INTERVAL '${interval}'
@@ -139,6 +136,7 @@ const fetchStationData = async (station_id, interval = "7 days") => {
   const durationFilter = 5;
 
   if (rows.length > 0) {
+    let plug_type = rows[0].plug_type;
     let startTime = rows[0].timestamp;
     let endTime = rows[0].timestamp;
     let currentStatus = rows[0].plug_status;
@@ -152,6 +150,7 @@ const fetchStationData = async (station_id, interval = "7 days") => {
         const duration = Math.round((endTime - startTime) / 60000); // Round duration
         if (duration >= durationFilter) {
           mergedData.push({
+            plug_type: plug_type,
             plug_status: currentStatus,
             startTime: startTime, // Include the start time
             duration: duration,
@@ -169,6 +168,7 @@ const fetchStationData = async (station_id, interval = "7 days") => {
     const finalDuration = Math.round((endTime - startTime) / 60000); // Round duration
     if (finalDuration >= durationFilter) {
       mergedData.push({
+        plug_type: plug_type,
         plug_status: currentStatus,
         startTime: startTime, // Include the start time
         duration: finalDuration,
