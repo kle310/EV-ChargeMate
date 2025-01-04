@@ -131,15 +131,17 @@ const generateHomePage = () => {
 
     <div class="container">
         <div class="tabs">
-            <button class="tab active" onclick="showTab(event, 'free')">Free</button>
-            <button class="tab" onclick="showTab(event, 'cheap')">Discounted</button>
+            <button class="tab active" onclick="showTab(event, 'overview')">Overview</button>
+            <button class="tab" onclick="showTab(event, 'freeL3')">Free L3</button>
+            <button class="tab" onclick="showTab(event, 'freeL2')">Free L2</button>
+            <button class="tab" onclick="showTab(event, 'discounted')">Discounted</button>
             <button class="tab" onclick="showTab(event, 'about')">About</button>
         </div>
 
-        <section id="free" class="tab-content active">
+        <section id="overview" class="tab-content active">
             <article>
                 <h2>Overview</h2>
-                <p>LADWP offers free fast chargers with a 30-minute usage limit. However, the official app doesn’t provide session duration details, requiring users to leave their vehicles to check the charger’s screen. I developed an app to track and display session durations for improved convenience.</p>
+                <p>I developed this app as a fun project to learn new technologies, with the added benefit of promoting efficient use of government-subsidized chargers. The app provides real-time insights into charger availability, helping users plan their charging sessions effectively. Please note that Level 3 chargers have a 30-minute time limit, while Level 2 chargers are limited to 120 minutes.</p>
             </article>
 
             <article>
@@ -149,12 +151,31 @@ const generateHomePage = () => {
                 <img src="/shell.jpeg" alt="Screenshot of the official app showing no duration info" />
 
                 <h3>My App</h3>
-                <p>Charger in use for 17 minutes:</p>
+                <p><b>Charger Availability:</b> In use for 17 minutes.</p>
                 <img src="/busy.jpeg" alt="App showing charger in use for 17 minutes" />
-                <p>Charger available for 3 minutes:</p>
+                <p><b>Charger Availability:</b> Available for 3 minutes.</p>
                 <img src="/available.jpeg" alt="App showing charger available for 3 minutes" />
+                <p><b>Weekly Availability:</b> Each green dot indicates a time slot where a charger was available for at least 5 minutes.</p>
+                <img src="/availability.jpeg" alt="App showing weekly availabilty" />
             </article>
 
+            <article>
+                <h2>Tech Stack</h2>
+                <p>Node.js + Express, NGINX, PostgreSQL, Docker, PM2, Ubuntu, ChatGPT/Copilot, GitHub</p>
+            </article>
+
+            <article>
+                <h2>To-Do</h2>
+                
+                    <s>Availability Heatmap</s><br>
+                <ul>
+                    <li>Predictions</li>
+                    <li>iOS app</li>
+                </ul>
+            </article>
+        </section>
+
+        <section id="freeL3" class="tab-content">
             <article>
                 <h2>Locations</h2>
                 <ul>
@@ -172,25 +193,20 @@ const generateHomePage = () => {
                     <li><a href="/2ZG5-01">Plaza Del Amo DCFC</a></li>
                 </ul>
             </article>
+        </section>
+
+        <section id="freeL2" class="tab-content">
 
             <article>
-                <h2>Tech Stack</h2>
-                <p>Node.js + Express, PostgreSQL, Docker, PM2, Ubuntu, ChatGPT/Copilot, GitHub</p>
-            </article>
-
-            <article>
-                <h2>To-Do</h2>
-                
-                    <s>Availability Heatmap</s><br>
-                    <img src="/availability.jpeg" alt="App showing weekly availabilty" />
+                <h2>Locations</h2>
                 <ul>
-                    <li>Predictions</li>
-                    <li>iOS app</li>
+                    
+                    
                 </ul>
             </article>
         </section>
 
-         <section id="cheap" class="tab-content">
+         <section id="discounted" class="tab-content">
 
             <article>
                 <h2>Locations</h2>

@@ -2,7 +2,6 @@ const {
   fetchStationAvailability,
   fetchStationData,
   fetchStationStatus,
-  fetchRawData,
 } = require("../models/stationModel");
 const { generateStatusPage } = require("../views/statusView");
 const {
