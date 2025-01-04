@@ -21,11 +21,6 @@ jobs:
 
       - name: Set up environment variables from secrets
         run: |
-          echo "PG_HOST=${{ secrets.PG_HOST }}" >> $GITHUB_ENV
-          echo "PG_USER=${{ secrets.PG_USER }}" >> $GITHUB_ENV
-          echo "PG_PASSWORD=${{ secrets.PG_PASSWORD }}" >> $GITHUB_ENV
-          echo "PG_DATABASE=${{ secrets.PG_DATABASE }}" >> $GITHUB_ENV
-          echo "PG_PORT=${{ secrets.PG_PORT }}" >> $GITHUB_ENV
           env PG_HOST=${{ secrets.PG_HOST }} PG_USER=${{ secrets.PG_USER }} PG_PASSWORD=${{ secrets.PG_PASSWORD }} PG_DATABASE=${{ secrets.PG_DATABASE }} PG_PORT=${{ secrets.PG_PORT }} npm run start &
 
       - name: Wait for the server to start
