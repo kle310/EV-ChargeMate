@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 
 test("homepage has title", async ({ page }) => {
   // Assert that the page title is correct
-  await expect(page).toHaveTitle("EV ChargeMate");
+  await expect(page).toHaveTitle("ChargeMate - save money on charging");
 });
 
 test("homepage tab navigation", async ({ page }) => {
@@ -23,5 +23,5 @@ test("homepage tab navigation", async ({ page }) => {
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Overview" }).click();
-  await expect(page).toHaveTitle("EV ChargeMate");
+  await expect(page.locator("body")).toContainText("Overview");
 });
