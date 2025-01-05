@@ -6,28 +6,25 @@ I developed this app as a fun project to learn new technologies, with the added 
 
 
 ## Tech Stack  
-- **Backend/Frontend**: Node.js + Express  
+- **Backend**: Node.js + Express.js
+- **Frontend**: HTML5, JavaScript (ES6+), CSS3
 - **Database**: PostgreSQL  
-- **Containerization**: Docker  
+- **Containerization**: Docker
+- **Security**: NGINX for SSL/TLS termination and reverse proxy  
 - **Process Management**: PM2  
 - **Hosting**: Ubuntu  
 - **AI Tools**: ChatGPT / Copilot  
 - **Version Control**: GitHub
 - **CI/CD**: GitHub Actions + Playwright
 
-
 ---
 
 ## To-Do Features  
 
-1. **Availability Heatmap**  
-   - Visualize weekly charger availability.  
-   *(Example: Heatmap displaying peak and off-peak usage times)*  
-
-2. **Predictions**  
+1. **Predictions**  
    - Predict charger availability based on historical data.  
 
-3. **iOS App**  
+2. **iOS App**  
    - Develop a mobile app for iPhone users.  
 
 ---
