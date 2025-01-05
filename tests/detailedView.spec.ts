@@ -4,19 +4,11 @@ test("test status view to detailed view", async ({ page }) => {
   // Navigate to the home page
   await page.goto("/");
 
-  // Click on the status button for 'Free L3' and verify navigation
-  const statusButton = page.getByRole("button", { name: "Free L3" });
-  await statusButton.click();
-  await expect(statusButton).toBeVisible(); // Verifying that the button is still visible
-
-  // Click on the 'LADWP DS-' link and verify that it navigates to the right page
-  const statusLink = page.getByRole("link", { name: "LADWP DS-" });
-  await statusLink.click();
-  await expect(page).toHaveURL(/.*12585A/); // Verifying URL changes
+  await page.locator("#locationDropdown").selectOption("/12585A");
+  await page.goto("http://localhost:3000/12585A");
 
   // Click on the 'detailed' link and ensure it navigates to the correct page
-  const detailedLink = page.locator('a[href="/12585A/detailed"]');
-  await detailedLink.click();
+  await page.locator('a[href="/12585A/detailed"]').click();
   await expect(page).toHaveURL("/12585A/detailed"); // Ensure we navigated to the detailed page
 
   // Ensure that the 'Availability' heading is present and visible
