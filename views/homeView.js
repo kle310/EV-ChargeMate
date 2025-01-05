@@ -164,7 +164,7 @@ const generateHomePage = () => {
                 <p><strong>Backend:</strong> Node.js with Express.js</p>
                 <p><strong>Frontend:</strong> HTML5, JavaScript (ES6+), CSS3</p>
                 <p><strong>Database:</strong> PostgreSQL for relational data storage</p>
-                <p><strong>SSL:</strong> NGINX for SSL termination and reverse proxy</p>
+                <p><strong>Security:</strong>NGINX for SSL/TLS termination and reverse proxy</p>
                 <p><strong>Containerization:</strong> Docker for consistent environment setup and deployment</p>
                 <p><strong>Process Management:</strong> PM2 for managing Node.js processes in production</p>
                 <p><strong>Operating System:</strong> Ubuntu for server environment</p>
