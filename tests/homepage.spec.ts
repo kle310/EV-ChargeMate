@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 // Fixture to set up common page navigation and footer check
 test.beforeEach(async ({ page }) => {
   // Navigate to the homepage and wait for the page to load completely
-  await page.goto("/", { waitUntil: "load" });
+  await page.goto("/");
 
   // Ensure the footer is visible for all tests
   const footer = page.locator("footer");
