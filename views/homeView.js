@@ -167,7 +167,7 @@ const generateHomePage = () => {
                 <p><strong>Security:</strong>NGINX for SSL/TLS termination and reverse proxy</p>
                 <p><strong>Containerization:</strong> Docker for consistent environment setup and deployment</p>
                 <p><strong>Process Management:</strong> PM2 for managing Node.js processes in production</p>
-                <p><strong>Operating System:</strong> Ubuntu for server environment</p>
+                <p><strong>Operating System: </strong> Ubuntu for server environment</p>
                 <p><strong>AI Assistance:</strong> ChatGPT and Copilot for development productivity and code suggestions</p>
                 <p><strong>CI/CD:</strong> Github Actions for continuous integration and deployment pipeline</p>
                 <p><strong>Testing:</strong> Playwright for end-to-end testing</p>
