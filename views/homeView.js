@@ -111,7 +111,7 @@ const generateHomePage = () => {
                 
             select {
                 height: 40px; /* Adjust this to make the dropdown itself taller */
-                font-size: 13px; /* Increase text size for better visibility */
+                font-size: 12px; /* Increase text size for better visibility */
             }
         </style>
 
