@@ -4,7 +4,7 @@ test("test status view to detailed view", async ({ page }) => {
   // Navigate to the home page
   await page.goto("/");
 
-  await page.locator("#locationDropdown").selectOption("/12585A");
+  await page.locator("#locationDropdown").selectOption("/12585B");
   await page.goto("http://localhost:3000/12585A");
 
   // Click on the 'detailed' link and ensure it navigates to the correct page
