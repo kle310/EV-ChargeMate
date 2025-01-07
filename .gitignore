@@ -135,3 +135,4 @@ public/.DS_Store
 playwright-report/
 playwright-results/
 test-results/
+database/

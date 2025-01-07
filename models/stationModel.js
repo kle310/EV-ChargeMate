@@ -184,8 +184,49 @@ const fetchStationData = async (station_id, interval = "7 days") => {
   return filteredData.reverse();
 };
 
+const fetchStationList = async (req) => {
+  // Extract query parameters
+  const { city, free, fast } = req.query;
+
+  // Base query
+  let query = "SELECT * FROM stations WHERE 1=1";
+  const queryParams = [];
+
+  // Add filtering by city
+  if (city) {
+    queryParams.push(city);
+    query += ` AND city = $${queryParams.length}`;
+  }
+
+  // Add filtering by city
+  if (free === "true") {
+    queryParams.push(0);
+    query += ` AND price_per_kwh = $${queryParams.length}`;
+  }
+
+  // Add filtering by city
+  if (fast === "true") {
+    queryParams.push(50);
+    query += ` AND max_electric_power >= $${queryParams.length}`;
+  }
+  const { rows } = await pool.query(query, queryParams);
+  return rows;
+};
+
+const fetchCities = async () => {
+  const query = `
+    SELECT DISTINCT city
+    FROM stations
+    ORDER BY city ASC;
+  `;
+  const { rows } = await pool.query(query);
+  return rows;
+};
+
 module.exports = {
   fetchStationAvailability,
   fetchStationStatus,
   fetchStationData,
+  fetchStationList,
+  fetchCities,
 };

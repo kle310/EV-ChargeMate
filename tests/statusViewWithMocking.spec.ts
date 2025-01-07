@@ -23,7 +23,7 @@ const testStatus = async (page, status, expectedText, expectedColor) => {
 };
 
 test("test status is unknown", async ({ page }) => {
-  await page.goto("http://localhost:3000/12585A");
+  await page.goto("http://localhost:3000/12585B");
 
   const statusLink = page.getByRole("link", { name: "0" });
   await expect(statusLink).toBeVisible();
