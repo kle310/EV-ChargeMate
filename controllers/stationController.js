@@ -2,6 +2,8 @@ const {
   fetchStationAvailability,
   fetchStationData,
   fetchStationStatus,
+  fetchStationList,
+  fetchCities,
 } = require("../models/stationModel");
 const { generateStatusPage } = require("../views/statusView");
 const {
@@ -28,6 +30,33 @@ const handleRequest = async (req, res, fetchFunction, responseHandler) => {
     console.error("Error handling request:", error);
     res.status(500).send("Internal Server Error");
   }
+};
+
+// const getStations = async (req, res) => {
+//   fetchStationList(req, res)
+//     .then((rows) => res.json(rows))
+//     .catch((error) => {
+//       console.error("Error fetching stations", error);
+//     });
+// };
+
+const getStations = async (req, res) => {
+  const result = await fetchStationList(req, res);
+  console.log(result);
+  const groupedChargers = {
+    free: result.filter((charger) => charger.price_per_kwh == 0),
+    paid: result.filter((charger) => charger.price_per_kwh > 0),
+  };
+  console.log(groupedChargers);
+  res.json(groupedChargers);
+};
+
+const getCities = (_, res) => {
+  fetchCities()
+    .then((rows) => res.json(rows))
+    .catch((error) => {
+      console.error("Error fetching cities", error);
+    });
 };
 
 const getStatus = (req, res) => {
@@ -64,4 +93,6 @@ module.exports = {
   getStatus,
   getStatusPage,
   getDetailedView,
+  getStations,
+  getCities,
 };
