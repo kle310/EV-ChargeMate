@@ -15,7 +15,7 @@ const validateStations = (stations, validator) => {
   stations.forEach(validator);
 };
 
-test.describe("Stations API Tests", () => {
+test.describe("Stations api tests", () => {
   test("Find all stations in specific cities", async ({ request, baseURL }) => {
     const stations = await fetchStations(request, baseURL);
 
