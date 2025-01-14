@@ -1,6 +1,11 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 
-const testStatus = async (page, status, expectedText, expectedColor) => {
+const testStatus = async (
+  page: Page, 
+  status: number, 
+  expectedText: string, 
+  expectedColor: string
+): Promise<void> => {
   await page.route("*/**/api/12585A/status", async (route) => {
     const json = { status: status };
     console.log("Mocking the api call with response: ", json);
@@ -22,7 +27,7 @@ const testStatus = async (page, status, expectedText, expectedColor) => {
   );
 };
 
-test("test status is unknown", async ({ page }) => {
+test("test status is unknown", async ({ page }: { page: Page }) => {
   await page.goto("http://localhost:3000/12585B");
 
   const statusLink = page.getByRole("link", { name: "0" });
@@ -38,10 +43,10 @@ test("test status is unknown", async ({ page }) => {
   );
 });
 
-test("test status is charging", async ({ page }) => {
-  await testStatus(page, "-30", "30", "red");
+test("test status is charging", async ({ page }: { page: Page }) => {
+  await testStatus(page, -30, "30", "red");
 });
 
-test("test status is available", async ({ page }) => {
-  await testStatus(page, "30", "30", "green");
+test("test status is available", async ({ page }: { page: Page }) => {
+  await testStatus(page, 30, "30", "green");
 });
