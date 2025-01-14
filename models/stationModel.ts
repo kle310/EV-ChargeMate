@@ -1,68 +1,71 @@
-import { Pool, QueryResult } from 'pg';
-import { Station, StationStatus, StationAvailability } from '../types';
-import { BaseModel } from './BaseModel';
+import { Pool, QueryResult } from "pg";
+import { Station, StationStatus } from "../types";
+import { BaseModel } from "./BaseModel";
 
 export class StationModel extends BaseModel {
   constructor(pool: Pool) {
     super(pool);
   }
 
-  async fetchStationStatus(station_id: string): Promise<StationStatus> {
+  async fetchStationStatus(station_id: string): Promise<{ status: number }> {
     const query = `
-      SELECT plug_status
-      FROM station_status
-      WHERE station_id = $1 AND 
-      timestamp >= NOW() - INTERVAL '1 days'
-      ORDER BY timestamp DESC;
-    `;
+    SELECT plug_status
+    FROM station_status
+    WHERE station_id = $1 
+      AND timestamp >= NOW() - INTERVAL '1 days'
+    ORDER BY timestamp DESC;
+  `;
 
     try {
-      const { rows: filteredResults }: QueryResult<Station> = await this.pool.query(query, [station_id]);
+      const { rows: filteredResults }: QueryResult<StationStatus> =
+        await this.pool.query(query, [station_id]);
 
       if (!filteredResults.length) {
         return { status: 0 };
       }
 
       const invalidStatuses = ["Preparing", "Finishing", "Unavailable"];
-      const { plug_status } = filteredResults[0];
+      const { plug_status: initialStatus } = filteredResults[0];
 
-      // Early exit if status is invalid
-      if (invalidStatuses.includes(plug_status.trim())) {
+      if (invalidStatuses.includes(initialStatus.trim())) {
         return { status: 0 };
       }
 
       let progress = 0;
-
-      // Helper to calculate progress based on status
-      const calculateProgress = (status: string, adjustment: number): StationStatus => {
-        for (const { plug_status } of filteredResults) {
+      const calculateProgress = (
+        status: string,
+        adjustment: number
+      ): { status: number } => {
+        filteredResults.forEach(({ plug_status }) => {
           if (plug_status.trim() === status) {
             progress += adjustment;
-          } else {
-            return { status: progress };
           }
-        }
-        return { status: progress }; // Fallback if no early return
+        });
+        return { status: progress };
       };
 
-      // Determine progress adjustment based on initial status
-      const initialStatus = plug_status.trim();
-      if (initialStatus === "Charging") {
+      if (initialStatus.trim() === "Charging") {
         return calculateProgress("Charging", -1);
       }
 
-      if (initialStatus === "Available") {
+      if (initialStatus.trim() === "Available") {
         return calculateProgress("Available", 1);
       }
 
       return { status: 0 };
     } catch (error) {
-      console.error('Error in fetchStationStatus:', error);
+      console.error(
+        `Error fetching station status for station_id ${station_id}:`,
+        error
+      );
       throw error;
     }
   }
 
-  async fetchStationAvailability(stationId: string, interval: string = '7 days'): Promise<StationAvailability[]> {
+  async fetchStationAvailability(
+    stationId: string,
+    interval: string = "7 days"
+  ): Promise<StationStatus[]> {
     const query = `
       SELECT timestamp 
       FROM station_status 
@@ -73,11 +76,14 @@ export class StationModel extends BaseModel {
     `;
 
     try {
-      const { rows }: QueryResult<StationAvailability> = await this.pool.query(query, [stationId, interval]);
+      const { rows }: QueryResult<StationStatus> = await this.pool.query(
+        query,
+        [stationId, interval]
+      );
       console.log(rows);
       return rows;
     } catch (error) {
-      console.error('Error in fetchStationAvailability:', error);
+      console.error("Error in fetchStationAvailability:", error);
       throw error;
     }
   }
@@ -93,7 +99,7 @@ export class StationModel extends BaseModel {
       const { rows }: QueryResult<Station> = await this.pool.query(query);
       return rows;
     } catch (error) {
-      console.error('Error in getAllStations:', error);
+      console.error("Error in getAllStations:", error);
       throw error;
     }
   }

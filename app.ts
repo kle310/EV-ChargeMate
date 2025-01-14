@@ -1,15 +1,15 @@
-import express from 'express';
-import { Pool } from 'pg';
-import { config } from 'dotenv';
-import { StationModel } from './models/stationModel';
-import { StationController } from './controllers/stationController';
-import { createStationRouter } from './routes/stationRoutes';
-import { generateHomeView } from './views/homeView';
-import { generateAboutView } from './views/aboutView';
-import { generateFavoritesView } from './views/favoritesView';
-import { generateMapView } from './views/mapView';
-import { generateDetailedView } from './views/detailedView';
-import path from 'path';
+import express from "express";
+import { Pool } from "pg";
+import { config } from "dotenv";
+import { StationModel } from "./models/stationModel";
+import { StationController } from "./controllers/stationController";
+import { createStationRouter } from "./routes/stationRoutes";
+import { generateHomeView } from "./views/homeView";
+import { generateAboutView } from "./views/aboutView";
+import { generateFavoritesView } from "./views/favoritesView";
+import { generateMapView } from "./views/mapView";
+import { generateDetailedView } from "./views/detailedView";
+import path from "path";
 
 config();
 
@@ -21,7 +21,7 @@ const pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT || '5432'), 
+  port: parseInt(process.env.DB_PORT || "5432"),
 });
 
 const stationModel = new StationModel(pool);
@@ -29,48 +29,56 @@ const stationController = new StationController(stationModel, pool);
 const stationRouter = createStationRouter(stationController);
 
 // Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
-app.use('/station', stationRouter);
+app.use("/station", stationRouter);
 
-app.get('/', async (req, res) => {
+app.get("/", async (req, res) => {
   const stations = await stationModel.getAllStations();
-  console.log('All stations:', stations);
+  console.log("All stations:", stations);
   const groupedStations = {
-    free: stations.filter(station => Number(station.price_per_kwh) === 0),
-    paid: stations.filter(station => Number(station.price_per_kwh) > 0)
+    free: stations.filter((station) => Number(station.price_per_kwh) === 0),
+    paid: stations.filter((station) => Number(station.price_per_kwh) > 0),
   };
-  console.log('Grouped stations:', groupedStations);
+  console.log("Grouped stations:", groupedStations);
   res.send(generateHomeView(groupedStations));
 });
 
-app.get('/about', (req, res) => {
+app.get("/about", (req, res) => {
   res.send(generateAboutView());
 });
 
-app.get('/favorites', (req, res) => {
+app.get("/favorites", (req, res) => {
   res.send(generateFavoritesView());
 });
 
-app.get('/map', (req, res) => {
+app.get("/map", (req, res) => {
   res.send(generateMapView());
 });
 
-app.get('/station/:id', async (req, res) => {
+app.get("/station/:id", async (req, res) => {
   try {
     const stationId = req.params.id;
     const station = await stationController.getStationById(stationId);
-    const availability = await stationController.getStationAvailabilityHistory(stationId);
-    
+    const availability = await stationController.getStationAvailabilityHistory(
+      stationId
+    );
+
     if (!station) {
-      res.status(404).send('Station not found');
+      res.status(404).send("Station not found");
       return;
     }
 
+    const stationStatus = availability.map((avail) => ({
+      station_id: avail.station_id,
+      plug_type: avail.plug_type,
+      plug_status: avail.plug_status,
+      // Add other properties if needed
+    }));
     res.send(generateDetailedView(station, availability));
   } catch (error) {
-    console.error('Error fetching station details:', error);
-    res.status(500).send('Error fetching station details');
+    console.error("Error fetching station details:", error);
+    res.status(500).send("Error fetching station details");
   }
 });
 

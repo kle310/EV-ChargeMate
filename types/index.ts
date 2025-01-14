@@ -18,11 +18,6 @@ export interface Station {
   updated_at: Date;
 }
 
-export interface StationAvailability {
-  timestamp: Date;
-}
-
-export interface StatusPageProps {
-  status: StationStatus;
-  station_id: string;
+export interface ProgressResponse {
+  status: number;
 }
