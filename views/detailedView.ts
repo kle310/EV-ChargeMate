@@ -161,7 +161,8 @@ export const generateDetailedView = (
                       (1000 * 60)
                   );
                   groupedRecords.push({
-                    ...currentGroup,
+                    status: currentGroup.status,
+                    startTime: currentGroup.startTime,
                     duration,
                   });
                 }
@@ -172,21 +173,22 @@ export const generateDetailedView = (
                 };
               }
 
-              // If this is the last record, add the final group
-              if (i === sortedRecords.length - 1) {
-                const duration = Math.round(
-                  (new Date("2025-01-14T09:53:05-08:00").getTime() -
-                    currentGroup.startTime.getTime()) /
-                    (1000 * 60)
-                );
-                groupedRecords.push({
-                  ...currentGroup,
-                  duration,
-                });
-              }
+              // // If this is the last record, add the final group
+              // if (i === sortedRecords.length - 1) {
+              //   const duration = Math.round(
+              //     (new Date("2025-01-14T09:53:05-08:00").getTime() -
+              //       currentGroup.startTime.getTime()) /
+              //       (1000 * 60)
+              //   );
+              //   groupedRecords.push({
+              //     ...currentGroup,
+              //     duration,
+              //   });
+              // }
             }
 
             return groupedRecords
+              .filter((record, index) => index === 0 || record.duration >= 5)
               .map((record) => {
                 const startTimeStr = record.startTime.toLocaleTimeString(
                   "en-US",

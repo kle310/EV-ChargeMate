@@ -71,21 +71,36 @@ export const generateHeader = (activePage: string): string => {
     <div class="nav-container">
       <div class="header">
         <div class="logo-title">
-          <img src="/images/chargemate-logo.png" alt="ChargeMate Logo" class="logo">
+          <a href="/" class="logo-link">
+            <img src="/images/chargemate-logo.png" alt="ChargeMate Logo" class="logo">
+          </a>
           <h1>EV ChargeMate</h1>
         </div>
         <nav class="nav-menu">
-          <a href="/" class="nav-link${activePage === 'home' ? ' active' : ''}">Home</a>
-          <a href="/map" class="nav-link${activePage === 'map' ? ' active' : ''}">Map</a>
-          <a href="/favorites" class="nav-link${activePage === 'favorites' ? ' active' : ''}">Favorites</a>
-          <a href="/about" class="nav-link${activePage === 'about' ? ' active' : ''}">About</a>
+          <a href="/" class="nav-link${
+            activePage === "home" ? " active" : ""
+          }">Home</a>
+          <a href="/map" class="nav-link${
+            activePage === "map" ? " active" : ""
+          }">Map</a>
+          <a href="/favorites" class="nav-link${
+            activePage === "favorites" ? " active" : ""
+          }">Favorites</a>
+          <a href="/about" class="nav-link${
+            activePage === "about" ? " active" : ""
+          }">About</a>
         </nav>
       </div>
     </div>
   `;
 };
 
-export const wrapInLayout = (content: string, title: string, activePage: string, additionalStyles: string = ''): string => {
+export const wrapInLayout = (
+  content: string,
+  title: string,
+  activePage: string,
+  additionalStyles: string = ""
+): string => {
   return `
     <!DOCTYPE html>
     <html>
