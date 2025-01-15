@@ -105,6 +105,16 @@ export const wrapInLayout = (
     <!DOCTYPE html>
     <html>
       <head>
+        <!-- Google Tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-NQVYSLJQ1W"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag('js', new Date());
+            gtag('config', 'G-NQVYSLJQ1W');
+        </script>
         <title>${title} - EV ChargeMate</title>
         <style>
           ${commonStyles}
