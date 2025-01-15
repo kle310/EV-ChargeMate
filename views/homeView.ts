@@ -1,16 +1,5 @@
-import { wrapInLayout } from './layout';
-
-interface Station {
-  station_id: string;
-  name: string;
-  price_per_kwh: number;
-  address: string;
-}
-
-interface GroupedChargers {
-  free: Station[];
-  paid: Station[];
-}
+import { wrapInLayout } from "./layout";
+import { GroupedChargers } from "../types";
 
 export const generateHomeView = (stations: GroupedChargers): string => {
   const homeStyles = `
@@ -67,8 +56,12 @@ export const generateHomeView = (stations: GroupedChargers): string => {
       background-color: #2ecc71;
       color: white;
     }
-    .status-unavailable {
+    .status-charging {
       background-color: #e74c3c;
+      color: white;
+    }
+    .status-unknown {
+      background-color: #d3d3d3;
       color: white;
     }
     .status-loading {
@@ -88,7 +81,9 @@ export const generateHomeView = (stations: GroupedChargers): string => {
     <div class="section">
       <h2>Free Chargers</h2>
       <div class="station-list">
-        ${stations.free.map(station => `
+        ${stations.free
+          .map(
+            (station) => `
           <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">
             <div class="station-name">${station.name}</div>
             <div class="station-price free-tag">Free</div>
@@ -99,14 +94,18 @@ export const generateHomeView = (stations: GroupedChargers): string => {
               Loading...
             </div>
           </a>
-        `).join('')}
+        `
+          )
+          .join("")}
       </div>
     </div>
 
     <div class="section">
       <h2>Paid Chargers</h2>
       <div class="station-list">
-        ${stations.paid.map(station => `
+        ${stations.paid
+          .map(
+            (station) => `
           <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">
             <div class="station-name">${station.name}</div>
             <div class="station-price paid-tag">$${station.price_per_kwh}/kWh</div>
@@ -117,7 +116,9 @@ export const generateHomeView = (stations: GroupedChargers): string => {
               Loading...
             </div>
           </a>
-        `).join('')}
+        `
+          )
+          .join("")}
       </div>
     </div>
 
@@ -127,20 +128,14 @@ export const generateHomeView = (stations: GroupedChargers): string => {
         try {
           const response = await fetch(\`/station/\${stationId}/status\`);
           const data = await response.json();
-          
-          let statusClass = '';
-          let statusText = '';
-          
-          if (data.status > 0) {
-            statusClass = 'status-available';
-            statusText = 'Available';
-          } else {
-            statusClass = 'status-unavailable';
-            statusText = 'Unavailable';
-          }
-          
+
+          const status = data.status_type?.toLowerCase() || '';
+          const statusClass = ['available', 'charging'].includes(status) ? \`status-\${status}\` : 'status-unknown';
+          const statusText = status.toUpperCase();
+
           statusElement.textContent = statusText;
-          statusElement.className = 'station-status ' + statusClass;
+          statusElement.className = \`station-status \${statusClass}\`;
+          
         } catch (error) {
           statusElement.textContent = 'Error';
           statusElement.className = 'station-status status-unavailable';
@@ -157,5 +152,5 @@ export const generateHomeView = (stations: GroupedChargers): string => {
     </script>
   `;
 
-  return wrapInLayout(content, 'Home', 'home', homeStyles);
+  return wrapInLayout(content, "Home", "home", homeStyles);
 };

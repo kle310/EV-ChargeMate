@@ -79,11 +79,11 @@ export const generateDetailedView = (
     }
     .free-tag {
       background-color: #e8f5e9;
-      color: #2e7d32;
+      color: #2ecc71;
     }
     .paid-tag {
       background-color: #fbe9e7;
-      color: #c62828;
+      color: #e74c3c;
     }
     .availability-history {
       background-color: white;
@@ -138,78 +138,39 @@ export const generateDetailedView = (
         </thead>
         <tbody>
           ${(() => {
-            // Sort availability records by timestamp in descending order
-            const sortedRecords = [...availability].sort(
-              (a, b) =>
-                new Date(b.timestamp).getTime() -
-                new Date(a.timestamp).getTime()
-            );
+            let table = "";
+            let isFirstRow = true; // Flag to identify the first row
 
-            // Group consecutive records with the same status
-            const groupedRecords = [];
-            let currentGroup = null;
-
-            for (let i = 0; i < sortedRecords.length; i++) {
-              const record = sortedRecords[i];
-              const nextRecord = sortedRecords[i + 1];
-
-              if (!currentGroup || record.plug_status !== currentGroup.status) {
-                if (currentGroup) {
-                  const duration = Math.round(
-                    (currentGroup.startTime.getTime() -
-                      new Date(record.timestamp).getTime()) /
-                      (1000 * 60)
-                  );
-                  groupedRecords.push({
-                    status: currentGroup.status,
-                    startTime: currentGroup.startTime,
-                    duration,
-                  });
-                }
-
-                currentGroup = {
-                  status: record.plug_status,
-                  startTime: new Date(record.timestamp),
-                };
+            availability.forEach((row) => {
+              // Skip rows where duration is less than 5, except the first row
+              if (row.duration < 5 && !isFirstRow) {
+                return; // Skip this iteration
               }
 
-              // // If this is the last record, add the final group
-              // if (i === sortedRecords.length - 1) {
-              //   const duration = Math.round(
-              //     (new Date("2025-01-14T09:53:05-08:00").getTime() -
-              //       currentGroup.startTime.getTime()) /
-              //       (1000 * 60)
-              //   );
-              //   groupedRecords.push({
-              //     ...currentGroup,
-              //     duration,
-              //   });
-              // }
-            }
+              let rowColor = "";
 
-            return groupedRecords
-              .filter((record, index) => index === 0 || record.duration >= 5)
-              .map((record) => {
-                const startTimeStr = record.startTime.toLocaleTimeString(
-                  "en-US",
-                  {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                  }
-                );
+              if (row.plug_status?.trim() === "Available") {
+                rowColor = 'style="background-color: #2ecc71; color: white;"';
+              }
 
-                return `
-                <tr class="${
-                  record.status.toLowerCase() === "available" ? "available" : ""
-                }">
-                  <td>${record.status}</td>
-                  <td>Today ${startTimeStr}</td>
-                  <td>${record.duration}</td>
-                </tr>
-              `;
-              })
-              .join("");
+              const startTimeStr = row.timestamp.toLocaleTimeString("en-US", {
+                weekday: "long",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              });
+
+              table += `<tr ${rowColor}>`;
+              table += `<td>${row.plug_status || ""}</td>`;
+              table += `<td>${startTimeStr || ""}</td>`;
+              table += `<td>${row.duration || ""}</td>`;
+              table += "</tr>";
+
+              // After the first row, set the flag to false
+              isFirstRow = false;
+            });
+
+            return table; // Ensure the table string is returned
           })()}
         </tbody>
       </table>

@@ -35,12 +35,12 @@ app.use("/station", stationRouter);
 
 app.get("/", async (req, res) => {
   const stations = await stationModel.getAllStations();
-  console.log("All stations:", stations);
+
   const groupedStations = {
     free: stations.filter((station) => Number(station.price_per_kwh) === 0),
     paid: stations.filter((station) => Number(station.price_per_kwh) > 0),
   };
-  console.log("Grouped stations:", groupedStations);
+
   res.send(generateHomeView(groupedStations));
 });
 
@@ -69,12 +69,12 @@ app.get("/station/:id", async (req, res) => {
       return;
     }
 
-    const stationStatus = availability.map((avail) => ({
-      station_id: avail.station_id,
-      plug_type: avail.plug_type,
-      plug_status: avail.plug_status,
-      // Add other properties if needed
-    }));
+    // // const stationStatus = availability.map((avail) => ({
+    // //   station_id: avail.station_id,
+    // //   plug_type: avail.plug_type,
+    // //   plug_status: avail.plug_status,
+    // //   // Add other properties if needed
+    // }));
     res.send(generateDetailedView(station, availability));
   } catch (error) {
     console.error("Error fetching station details:", error);
