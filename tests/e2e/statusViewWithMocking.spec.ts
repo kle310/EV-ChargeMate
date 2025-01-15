@@ -1,9 +1,9 @@
 import { test, expect, Page } from "@playwright/test";
 
 const testStatus = async (
-  page: Page, 
-  status: number, 
-  expectedText: string, 
+  page: Page,
+  status: number,
+  expectedText: string,
   expectedColor: string
 ): Promise<void> => {
   await page.route("*/**/api/12585A/status", async (route) => {

@@ -72,11 +72,8 @@ export class StationController {
   async getStationAvailabilityHistory(
     stationId: string
   ): Promise<StationStatus[]> {
-    const result = await this.pool.query(
-      "SELECT * FROM station_status WHERE station_id = $1 ORDER BY timestamp DESC LIMIT 600",
-      [stationId]
-    );
-    return result.rows;
+    const status = await this.stationModel.fetchStationAvailability(stationId);
+    return status;
   }
 
   async getStationStatus(stationId: string): Promise<StationStatus | null> {

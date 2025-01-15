@@ -3,6 +3,7 @@ export interface StationStatus {
   plug_type: string;
   plug_status: string;
   timestamp: Date;
+  duration: number;
 }
 
 export interface Station {
@@ -19,5 +20,11 @@ export interface Station {
 }
 
 export interface ProgressResponse {
-  status: number;
+  status_type: string;
+  status_duration: number;
+}
+
+export interface GroupedChargers {
+  free: Station[];
+  paid: Station[];
 }
