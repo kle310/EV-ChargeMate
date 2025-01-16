@@ -4,35 +4,6 @@ const { CronJob } = require("cron");
 
 // Constants
 const STATIONS = [
-  // free fast chargers
-  { id: "12585A" },
-  { id: "2DWE-13" },
-  { id: "2DWE-14" },
-  { id: "2XZB-22" },
-  { id: "2XZB-23" },
-  { id: "2XZB-24" },
-  { id: "2XZB-25" },
-  { id: "2ZG5-01" },
-
-  // discounted fast chargers
-  { id: "153420" },
-  { id: "153421" },
-  { id: "153528" },
-  { id: "153787" },
-  { id: "15152B" },
-  { id: "15157B" },
-  { id: "15158B" },
-  { id: "153368" },
-  { id: "153370" },
-  { id: "153372" },
-  { id: "153376" },
-  { id: "153380" },
-  { id: "153384" },
-
-  //free chargers
-  { id: "245F-01" },
-  { id: "245F-02" },
-  { id: "2N9O-01" },
   { id: "2N9O-02" },
   { id: "2GWB-01" },
   { id: "2GWB-02" },
@@ -44,11 +15,11 @@ const STATIONS = [
 ];
 
 const PG_CONFIG = {
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
 };
 
 const API_CONFIG = {
@@ -162,7 +133,7 @@ async function saveStationStatus(client, stationId, status) {
 }
 
 // Fetch and store status data for all stations
-async function processStations() {
+async function processStations(stations) {
   const client = new Client(PG_CONFIG);
 
   try {
@@ -170,11 +141,11 @@ async function processStations() {
     await client.connect();
     console.log("Connected to database");
 
-    for (const station of STATIONS) {
+    for (const station of stations) {
       try {
         console.log(`Processing station ${station.id}`);
-        const data = await fetchStationData(station.id);
-        await insertStationData(client, station.id, data);
+        const data = await fetchStationData(station.id); // Fetch station data
+        await insertStationData(client, station.id, data); // Store data in the database
       } catch (error) {
         console.error(`Error processing station ${station.id}`, error);
       }
@@ -187,13 +158,49 @@ async function processStations() {
   }
 }
 
-// Schedule the job
+// Fetch stations from the database
+async function getStationsFromDB() {
+  const client = new Client(PG_CONFIG);
+
+  try {
+    console.log("Connecting to database...");
+    await client.connect();
+    console.log("Connected to database");
+
+    const query = `
+      SELECT station_id FROM stations;
+    `;
+
+    const result = await client.query(query); // Fetch the result
+    const data = result.rows.map((row) => ({ id: row.station_id })); // Format the rows
+    console.log("Fetched data:", data);
+
+    return data; // Return the fetched data
+  } catch (error) {
+    console.error("Error with database operations", error);
+    throw error; // Rethrow the error to handle it upstream if needed
+  } finally {
+    await client.end();
+    console.log("Database connection closed");
+  }
+}
+
+// Cron job setup
 const job = new CronJob(
   CRON_CONFIG.expression,
-  processStations,
+  async () => {
+    console.log("Cron job started...");
+    try {
+      const stations = await getStationsFromDB(); // Fetch stations from DB
+      await processStations(stations); // Process stations
+    } catch (error) {
+      console.error("Error in cron job:", error);
+    }
+    console.log("Cron job finished.");
+  },
   null,
   true,
   CRON_CONFIG.timezone
 );
 
-console.log("Cron job started with expression:", CRON_CONFIG.expression);
+job.start();
