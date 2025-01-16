@@ -35,13 +35,14 @@ app.use("/station", stationRouter);
 
 app.get("/", async (req, res) => {
   const stations = await stationModel.getAllStations();
+  const selectedCity = req.query.city as string || 'all';
 
   const groupedStations = {
     free: stations.filter((station) => Number(station.price_per_kwh) === 0),
     paid: stations.filter((station) => Number(station.price_per_kwh) > 0),
   };
 
-  res.send(generateHomeView(groupedStations));
+  res.send(generateHomeView(groupedStations, selectedCity));
 });
 
 app.get("/about", (req, res) => {
