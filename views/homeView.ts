@@ -1,7 +1,7 @@
 import { wrapInLayout } from "./layout";
 import { GroupedChargers } from "../types";
 
-export const generateHomeView = (stations: GroupedChargers): string => {
+export const generateHomeView = (stations: GroupedChargers, selectedCity: string = 'all'): string => {
   const homeStyles = `
     .section {
       background-color: white;
@@ -75,13 +75,68 @@ export const generateHomeView = (stations: GroupedChargers): string => {
     .paid-tag {
       color: #e74c3c;
     }
+    .city-selector {
+      margin-bottom: 20px;
+      padding: 10px;
+    }
+    .city-selector select {
+      padding: 8px 16px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: white;
+      cursor: pointer;
+    }
+    .city-selector select:hover {
+      border-color: #999;
+    }
   `;
 
+  const filterStationsByCity = (stationList: any[]) => {
+    if (selectedCity === 'all') return stationList;
+    
+    // Log the selected city and available cities for debugging
+    console.log('Selected city:', selectedCity);
+    console.log('Available cities:', stationList.map(s => s.city));
+    
+    return stationList.filter(station => {
+      const stationCity = station.city?.toLowerCase().replace(/\s+/g, '_');
+      console.log('Comparing:', stationCity, 'with:', selectedCity);
+      return stationCity === selectedCity;
+    });
+  };
+
+  // Log the initial stations data
+  console.log('Initial free stations:', stations.free);
+  console.log('Initial paid stations:', stations.paid);
+
   const content = `
+    <div class="city-selector">
+      <select id="citySelector" onchange="window.location.href = '/?city=' + encodeURIComponent(this.value)">
+        <option value="all" ${selectedCity === 'all' ? 'selected' : ''}>All Cities</option>
+        ${[...new Set([
+          ...stations.free.map(station => station.city),
+          ...stations.paid.map(station => station.city)
+        ])]
+          .filter(city => city) // Remove any undefined or empty cities
+          .sort()
+          .map(city => {
+            const cityValue = city.toLowerCase().replace(/\s+/g, '_');
+            console.log('Creating option:', cityValue);
+            return `
+              <option value="${cityValue}" 
+                ${selectedCity === cityValue ? 'selected' : ''}>
+                ${city}
+              </option>
+            `;
+          }).join('')}
+      </select>
+    </div>
+
     <div class="section">
       <h2>Free Chargers</h2>
       <div class="station-list">
-        ${stations.free
+        ${filterStationsByCity(stations.free)
           .map(
             (station) => `
           <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">
@@ -103,7 +158,7 @@ export const generateHomeView = (stations: GroupedChargers): string => {
     <div class="section">
       <h2>Paid Chargers</h2>
       <div class="station-list">
-        ${stations.paid
+        ${filterStationsByCity(stations.paid)
           .map(
             (station) => `
           <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">

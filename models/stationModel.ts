@@ -131,7 +131,7 @@ export class StationModel extends BaseModel {
     const query = `
       SELECT *
       FROM stations
-      ORDER BY station_id;
+      ORDER BY max_electric_power DESC, city;
     `;
 
     try {
