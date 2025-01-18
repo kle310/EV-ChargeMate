@@ -35,31 +35,32 @@ export const generateDetailedView = (
       border-radius: 4px;
     }
     .status-link {
-      padding: 8px 16px;
-      border-radius: 4px;
+      padding: 6px 12px;
+      border-radius: 20px;
       text-decoration: none;
-      color: white;
       font-weight: 500;
-      transition: background-color 0.2s ease;
+      transition: all 0.2s ease;
     }
     .status-link.available {
-      background-color: #4CAF50;
+      background-color: #e8f5e9;
+      color: #2ecc71;
     }
     .status-link.available:hover {
-      background-color: #43A047;
+      background-color: #c8e6c9;
     }
     .status-link.charging {
-      background-color: #F44336;
+      background-color: #fee8e7;
+      color: #e74c3c;
     }
     .status-link.charging:hover {
-      background-color: #E53935;
+      background-color: #fdd9d7;
     }
     .status-link.unknown {
-      background-color: #9E9E9E;
-      color: white;
+      background-color: #f5f5f5;
+      color: #95a5a6;
     }
     .status-link.unknown:hover {
-      background-color: #757575;
+      background-color: #eeeeee;
     }
     .station-info {
       display: grid;
@@ -140,7 +141,7 @@ export const generateDetailedView = (
     .activity-badge {
       font-size: 0.9em;
       padding: 6px 12px;
-      border-radius: 20px;
+      border-radius: 4px;
       font-weight: 500;
     }
     .activity-badge.low {
