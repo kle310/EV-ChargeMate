@@ -25,24 +25,6 @@ const API_CONFIG = {
   },
 };
 
-// const headers = {
-//   "User-Agent":
-//     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
-//   Accept: "application/json, text/plain, */*",
-//   "Accept-Language": "en-US,en;q=0.5",
-//   "Accept-Encoding": "gzip, deflate, br, zstd",
-//   "Content-Type": "application/json",
-//   Origin: "https://sky.shellrecharge.com",
-//   Connection: "keep-alive",
-//   Referer: "https://sky.shellrecharge.com/evowner/portal/locate-charger",
-//   Cookie:
-//     'JSESSIONID="0cd96acf2e73f882"; cookieconsent_status=allow; _ga_V8VQWLDZ8H=GS1.1.1736903203.5.1.1736903378.0.0.0; _ga=GA1.1.1972520385.1735363559; dtCookie=v_4_srv_3_sn_EB6B9F18653C309B2FE39AD6893DE9A7_perc_100000_ol_0_mul_1_app-3A847795f2851c330b_1; rxVisitor=1736903202877738GJN3II9VVGT2KU5B0HSQUGID1DPER; dtPC=3$503343107_58h-vUFNRLWUGJIOIOAPUMUFHNKJVJAUCEHJT-0e0; rxvt=1736905481119|1736903202878; dtSa=true%7CKD%7C-1%7CPage%3A%20locate-charger%7C-%7C1736903377091%7C503347247_25%7Chttps%3A%2F%2Fsky.shellrecharge.com%2Fevowner%2Fportal%2Flocate-charger%7C%7C%7C%7C',
-//   "Sec-Fetch-Dest": "empty",
-//   "Sec-Fetch-Mode": "cors",
-//   "Sec-Fetch-Site": "same-origin",
-//   TE: "trailers",
-// };
-
 const body = JSON.stringify({
   latitude: 34.040394524634046,
   longitude: -118.4659293574566,

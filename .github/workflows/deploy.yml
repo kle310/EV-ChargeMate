@@ -65,6 +65,7 @@ jobs:
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
         run: |
           ssh $REMOTE_USER@$REMOTE_HOST << EOF
-            cd code/evc-tracker
+            cd code/production
             git pull origin main
+            npm run build
           EOF
