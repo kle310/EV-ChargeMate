@@ -87,17 +87,8 @@ app.get("/station/:id", async (req, res) => {
 app.get("/station/:id/live", async (req, res) => {
   try {
     const stationId = req.params.id;
-    const status = await stationController.getStationStatus(stationId);
-    
-    if (!status) {
-      res.send(generateStatusPage(0, stationId)); // Default to 0 if no status found
-      return;
-    }
-
-    // Convert plug_status to a numeric value
-    const statusValue = status.plug_status === 'Available' ? 1 : -1;
-    res.send(generateStatusPage(statusValue, stationId));
-
+    const status = await stationModel.fetchStationStatus(stationId);
+    res.send(generateStatusPage(status, stationId));
   } catch (error) {
     console.error("Error fetching station status:", error);
     res.status(500).send("Error fetching station status");

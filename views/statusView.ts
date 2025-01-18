@@ -1,12 +1,19 @@
 import { wrapInLayout } from './layout';
+import { ProgressResponse } from '../types';
 
-interface StatusResponse {
-  status: number;
-}
+export const generateStatusPage = (status: ProgressResponse, stationId: string): string => {
+  const getBackgroundColor = (statusType: string): string => {
+    switch (statusType.toLowerCase()) {
+      case 'available':
+        return '#4CAF50';
+      case 'charging':
+        return '#F44336';
+      default:
+        return '#9E9E9E';
+    }
+  };
 
-export const generateStatusPage = (status: number, stationId: string): string => {
-  const backgroundColor = status > 0 ? '#4CAF50' : status === 0 ? '#9E9E9E' : '#F44336';
-  const condition = Math.abs(status);
+  const backgroundColor = getBackgroundColor(status.status_type);
 
   const styles = `
     .status-container {
@@ -20,7 +27,7 @@ export const generateStatusPage = (status: number, stationId: string): string =>
       transition: background-color 0.3s ease;
     }
     .status {
-      font-size: 10rem;
+      font-size: 25rem;
       font-weight: bold;
       color: white;
       text-decoration: none;
@@ -38,19 +45,26 @@ export const generateStatusPage = (status: number, stationId: string): string =>
   const content = `
     <div class="status-container">
       <a href="/station/${stationId}" class="status-link">
-        <div class="status" id="statusNumber">${condition}</div>
+        <div class="status" id="statusNumber">${status.status_duration}</div>
       </a>
     </div>
     <script>
       async function updateStatus() {
         try {
           const response = await fetch('/station/${stationId}/status');
-          const data = await response.json() as StatusResponse;
-          const status = data.status;
-          const backgroundColor = status > 0 ? '#4CAF50' : status === 0 ? '#9E9E9E' : '#F44336';
-          const condition = Math.abs(status);
+          const data = await response.json();
+          const backgroundColor = (() => {
+            switch (data.status_type.toLowerCase()) {
+              case 'available':
+                return '#4CAF50';
+              case 'charging':
+                return '#F44336';
+              default:
+                return '#9E9E9E';
+            }
+          })();
           document.querySelector('.status-container').style.backgroundColor = backgroundColor;
-          document.getElementById('statusNumber').textContent = condition.toString();
+          document.getElementById('statusNumber').textContent = data.status_duration.toString();
         } catch (error) {
           console.error('Error fetching status:', error);
         }
