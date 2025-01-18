@@ -4,8 +4,10 @@
   "description": "ev charger tracking app",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
+    "build": "tsc",
+    "postbuild": "cp -r ./public ./dist/public",
+    "start": "npm run build && node dist/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only app.ts",
     "test": "playwright test",
     "test:report": "playwright show-report"
   },
@@ -19,6 +21,13 @@
     "pg": "^8.13.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.1"
+    "@playwright/test": "^1.49.1",
+    "@types/axios": "^0.9.36",
+    "@types/cron": "^2.0.1",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.6",
+    "@types/pg": "^8.11.10",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.3"
   }
 }

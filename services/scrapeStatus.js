@@ -2,18 +2,6 @@ require("dotenv").config();
 const { Client } = require("pg");
 const { CronJob } = require("cron");
 
-// Constants
-const STATIONS = [
-  { id: "2N9O-02" },
-  { id: "2GWB-01" },
-  { id: "2GWB-02" },
-  { id: "2GWB-03" },
-  { id: "24XI-01" },
-  { id: "24XI-02" },
-  { id: "24XI-03" },
-  { id: "24XI-04" },
-];
-
 const PG_CONFIG = {
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -23,7 +11,7 @@ const PG_CONFIG = {
 };
 
 const API_CONFIG = {
-  url: process.env.API_URL_2,
+  evse_url: process.env.SHELL_EVSE_DETAILS,
   headers: {
     Host: process.env.API_HEADERS_HOST,
     "Content-Type": process.env.API_HEADERS_CONTENT_TYPE,
@@ -44,7 +32,7 @@ const CRON_CONFIG = {
 // Fetch station data
 async function fetchStationData(stationId) {
   try {
-    const response = await fetch(`${API_CONFIG.url}${stationId}`, {
+    const response = await fetch(`${API_CONFIG.evse_url}${stationId}`, {
       method: "GET",
       headers: API_CONFIG.headers,
     });

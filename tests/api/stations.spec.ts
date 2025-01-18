@@ -1,22 +1,42 @@
 import { test, expect } from "@playwright/test";
+import type { APIRequestContext } from '@playwright/test';
+
+interface Station {
+  city: string;
+  price_per_kwh: number;
+  [key: string]: any;
+}
+
+interface StationsResponse {
+  free: Station[];
+  paid: Station[];
+}
 
 // Helper function to send API requests and parse responses
-const fetchStations = async (request, baseURL, queryParams = "") => {
+const fetchStations = async (
+  request: APIRequestContext, 
+  baseURL: string, 
+  queryParams: string = ""
+): Promise<Station[]> => {
   const response = await request.get(`${baseURL}/api/stations/${queryParams}`);
   expect(response.ok()).toBeTruthy(); // Ensure the API response is successful
-  const json = await response.json();
+  const json = await response.json() as StationsResponse;
   expect(json).toBeTruthy(); // Ensure the response body exists
   return [...(json.free || []), ...(json.paid || [])];
 };
 
 // Helper function to validate station properties
-const validateStations = (stations, validator) => {
+const validateStations = (
+  stations: Station[], 
+  validator: (station: Station) => void
+): void => {
   expect(Array.isArray(stations)).toBeTruthy(); // Validate the result is an array
   stations.forEach(validator);
 };
 
 test.describe("Stations api tests", () => {
   test("Find all stations in specific cities", async ({ request, baseURL }) => {
+    if (!baseURL) throw new Error("baseURL is required");
     const stations = await fetchStations(request, baseURL);
 
     // Validate stations in Pasadena and Los Angeles
@@ -28,6 +48,7 @@ test.describe("Stations api tests", () => {
   });
 
   test("Filter stations by city", async ({ request, baseURL }) => {
+    if (!baseURL) throw new Error("baseURL is required");
     const cityName = "Los Angeles";
     const stations = await fetchStations(
       request,
@@ -44,31 +65,30 @@ test.describe("Stations api tests", () => {
 
   test.describe("Filter stations by free", () => {
     test("Can filter by free=true", async ({ request, baseURL }) => {
+      if (!baseURL) throw new Error("baseURL is required");
       const stations = await fetchStations(request, baseURL, "?free=true");
 
       // Validate that all stations have price_per_kwh = 0
       validateStations(stations, (station) => {
         expect(station).toHaveProperty("price_per_kwh");
-        const pricePerKwh = parseFloat(station.price_per_kwh);
-        expect(pricePerKwh).not.toBeNaN();
-        expect(pricePerKwh).toBe(0);
+        expect(station.price_per_kwh).toBe(0);
       });
     });
 
     test("Can filter by free=false", async ({ request, baseURL }) => {
+      if (!baseURL) throw new Error("baseURL is required");
       const stations = await fetchStations(request, baseURL, "?free=false");
 
       // Validate that all stations have price_per_kwh > 0
       validateStations(stations, (station) => {
         expect(station).toHaveProperty("price_per_kwh");
-        const pricePerKwh = parseFloat(station.price_per_kwh);
-        expect(pricePerKwh).not.toBeNaN();
-        expect(pricePerKwh).toBeGreaterThanOrEqual(0);
+        expect(station.price_per_kwh).toBeGreaterThan(0);
       });
     });
   });
 
   test("Filter stations by fast charging", async ({ request, baseURL }) => {
+    if (!baseURL) throw new Error("baseURL is required");
     const stations = await fetchStations(request, baseURL, "?fast=true");
 
     // Validate that all stations support fast charging
