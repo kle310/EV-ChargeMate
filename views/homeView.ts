@@ -1,7 +1,10 @@
 import { wrapInLayout } from "./layout";
 import { GroupedChargers } from "../types";
 
-export const generateHomeView = (stations: GroupedChargers, selectedCity: string = 'all'): string => {
+export const generateHomeView = (
+  stations: GroupedChargers,
+  selectedCity: string = "all"
+): string => {
   const homeStyles = `
     .section {
       background-color: white;
@@ -93,43 +96,38 @@ export const generateHomeView = (stations: GroupedChargers, selectedCity: string
   `;
 
   const filterStationsByCity = (stationList: any[]) => {
-    if (selectedCity === 'all') return stationList;
-    
-    // Log the selected city and available cities for debugging
-    console.log('Selected city:', selectedCity);
-    console.log('Available cities:', stationList.map(s => s.city));
-    
-    return stationList.filter(station => {
-      const stationCity = station.city?.toLowerCase().replace(/\s+/g, '_');
-      console.log('Comparing:', stationCity, 'with:', selectedCity);
+    if (selectedCity === "all") return stationList;
+
+    return stationList.filter((station) => {
+      const stationCity = station.city?.toLowerCase().replace(/\s+/g, "_");
       return stationCity === selectedCity;
     });
   };
 
-  // Log the initial stations data
-  console.log('Initial free stations:', stations.free);
-  console.log('Initial paid stations:', stations.paid);
-
   const content = `
     <div class="city-selector">
       <select id="citySelector" onchange="window.location.href = '/?city=' + encodeURIComponent(this.value)">
-        <option value="all" ${selectedCity === 'all' ? 'selected' : ''}>All Cities</option>
-        ${[...new Set([
-          ...stations.free.map(station => station.city),
-          ...stations.paid.map(station => station.city)
-        ])]
-          .filter(city => city) // Remove any undefined or empty cities
+        <option value="all" ${
+          selectedCity === "all" ? "selected" : ""
+        }>All Cities</option>
+        ${[
+          ...new Set([
+            ...stations.free.map((station) => station.city),
+            ...stations.paid.map((station) => station.city),
+          ]),
+        ]
+          .filter((city) => city) // Remove any undefined or empty cities
           .sort()
-          .map(city => {
-            const cityValue = city.toLowerCase().replace(/\s+/g, '_');
-            console.log('Creating option:', cityValue);
+          .map((city) => {
+            const cityValue = city.toLowerCase().replace(/\s+/g, "_");
             return `
               <option value="${cityValue}" 
-                ${selectedCity === cityValue ? 'selected' : ''}>
+                ${selectedCity === cityValue ? "selected" : ""}>
                 ${city}
               </option>
             `;
-          }).join('')}
+          })
+          .join("")}
       </select>
     </div>
 

@@ -24,10 +24,42 @@ export const generateDetailedView = (
       color: #333;
       margin: 0;
     }
+    .header-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
     .price-tag {
       font-size: 1.2em;
       padding: 8px 16px;
       border-radius: 4px;
+    }
+    .status-link {
+      padding: 8px 16px;
+      border-radius: 4px;
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
+    }
+    .status-link.available {
+      background-color: #4CAF50;
+    }
+    .status-link.available:hover {
+      background-color: #43A047;
+    }
+    .status-link.charging {
+      background-color: #F44336;
+    }
+    .status-link.charging:hover {
+      background-color: #E53935;
+    }
+    .status-link.unknown {
+      background-color: #9E9E9E;
+      color: white;
+    }
+    .status-link.unknown:hover {
+      background-color: #757575;
     }
     .station-info {
       display: grid;
@@ -97,14 +129,23 @@ export const generateDetailedView = (
     <div class="station-details">
       <div class="station-header">
         <h1 class="station-name">${station.name}</h1>
-        <div class="price-tag ${
-          station.price_per_kwh == 0 ? "free-tag" : "paid-tag"
-        }">
-          ${
-            station.price_per_kwh == 0
-              ? "Free"
-              : `$${station.price_per_kwh}/kWh`
-          }
+        <div class="header-actions">
+          <a href="/station/${station.station_id}/live" class="status-link ${
+            availability[0]?.plug_status === 'Available'
+              ? 'available'
+              : availability[0]?.plug_status === 'Charging'
+              ? 'charging'
+              : 'unknown'
+          }">View Live Status</a>
+          <div class="price-tag ${
+            station.price_per_kwh == 0 ? "free-tag" : "paid-tag"
+          }">
+            ${
+              station.price_per_kwh == 0
+                ? "Free"
+                : `$${station.price_per_kwh}/kWh`
+            }
+          </div>
         </div>
       </div>
 
