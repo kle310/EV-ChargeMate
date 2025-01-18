@@ -423,7 +423,12 @@ export const generateDetailedView = (
             const day = new Date(status.timestamp).toLocaleDateString("en-US", {
               weekday: "long",
             });
-            dayUsage[day] += status.duration;
+            const isValidDay = (d: string): d is keyof typeof dayUsage => {
+                return d in dayUsage;
+            };
+            if (isValidDay(day)) {
+                dayUsage[day] += status.duration;
+            }
           });
 
           // Determine activity level based on total sessions
