@@ -58,7 +58,7 @@ export class StationModel extends BaseModel {
 
   async fetchStationAvailability(
     stationId: string,
-    interval: string = "2 days"
+    interval: string = "7 days"
   ): Promise<StationStatus[]> {
     const query = `
     SELECT plug_type, plug_status, timestamp
