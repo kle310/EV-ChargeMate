@@ -6,13 +6,12 @@ const testStatus = async (
   expectedText: string,
   expectedColor: string
 ): Promise<void> => {
-  await page.route("*/**/api/12585A/status", async (route) => {
+  await page.route("**/api/12585A/status", async (route) => {
     const json = { status: status };
-    console.log("Mocking the api call with response: ", json);
     await route.fulfill({ json });
   });
 
-  await page.goto("http://localhost:3000/12585A");
+  await page.goto("/12585A");
 
   const statusLink = page.getByRole("link", { name: expectedText });
   await expect(statusLink).toBeVisible();
@@ -28,7 +27,7 @@ const testStatus = async (
 };
 
 test("test status is unknown", async ({ page }: { page: Page }) => {
-  await page.goto("http://localhost:3000/12585B");
+  await page.goto("/12585B");
 
   const statusLink = page.getByRole("link", { name: "0" });
   await expect(statusLink).toBeVisible();
