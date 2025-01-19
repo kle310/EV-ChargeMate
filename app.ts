@@ -50,12 +50,18 @@ app.get("/about", (req, res) => {
   res.send(generateAboutView());
 });
 
-app.get("/favorites", (req, res) => {
-  res.send(generateFavoritesView());
+app.get("/map", async (req, res) => {
+  try {
+    const stations = await stationController.fetchStationsForMap();
+    res.send(generateMapView(stations));
+  } catch (error) {
+    console.error("Error fetching stations for map:", error);
+    res.status(500).send("Error loading map data");
+  }
 });
 
-app.get("/map", (req, res) => {
-  res.send(generateMapView());
+app.get("/favorites", (req, res) => {
+  res.send(generateFavoritesView());
 });
 
 app.get("/station/:id", async (req, res) => {
@@ -70,13 +76,6 @@ app.get("/station/:id", async (req, res) => {
       res.status(404).send("Station not found");
       return;
     }
-
-    // // const stationStatus = availability.map((avail) => ({
-    // //   station_id: avail.station_id,
-    // //   plug_type: avail.plug_type,
-    // //   plug_status: avail.plug_status,
-    // //   // Add other properties if needed
-    // }));
     res.send(generateDetailedView(station, availability));
   } catch (error) {
     console.error("Error fetching station details:", error);

@@ -26,8 +26,8 @@ const API_CONFIG = {
 };
 
 const body = JSON.stringify({
-  latitude: 34.040394524634046,
-  longitude: -118.4659293574566,
+  latitude: 34.1387312,
+  longitude: -118.1311252,
   radius: 10,
   limit: 10,
   offset: 0,
@@ -40,8 +40,6 @@ const body = JSON.stringify({
   status: [],
   excludePricing: false,
 });
-// Other configurations remain the same
-// ...
 
 // Fetch station data
 async function fetchSearchData(client) {
@@ -57,13 +55,6 @@ async function fetchSearchData(client) {
     }
 
     const data = await response.json();
-    const list = data.data;
-
-    for (const station of list) {
-      console.log(`Station ID: ${station.id}`);
-      await fetchEVSEData(client, station.id);
-    }
-
     return data;
   } catch (error) {
     console.error(`Error searching`, error);
@@ -143,6 +134,8 @@ async function insertStationData(client, stationId, data) {
       data.data.evses?.[0].multiPortChargingAllowed,
       data.data.evses[0].ports[0].portPrice.priceList[0].priceComponents[0]
         .price,
+      data.data.latitude,
+      data.data.longitude
     ];
 
     // Check if "test" is found in any of the fields (case-insensitive)
@@ -174,6 +167,8 @@ async function insertStationData(client, stationId, data) {
       data.data.evses?.[0].multiPortChargingAllowed,
       data.data.evses[0].ports[0].portPrice.priceList[0].priceComponents[0]
         .price,
+      data.data.latitude,
+      data.data.longitude
     ];
 
     // console.log(values);
@@ -186,38 +181,91 @@ async function insertStationData(client, stationId, data) {
 
 // Function to save station status to the database
 async function saveStationStatus(client, stationId, values) {
-  const query = `INSERT INTO stations (station_id, 
-    name,
-    address, 
-    city, 
-    max_electric_power, 
-    multi_port_charging_allowed, 
-    price_per_kwh)
-
-    VALUES ($1, $2, $3, $4, $5, $6, $7);
-  ;
+  const query = `
+    INSERT INTO stations (
+      station_id, 
+      name,
+      address, 
+      city, 
+      max_electric_power, 
+      multi_port_charging_allowed, 
+      price_per_kwh,
+      latitude,
+      longitude
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ON CONFLICT (station_id) 
+    DO UPDATE SET
+      name = EXCLUDED.name,
+      address = EXCLUDED.address,
+      city = EXCLUDED.city,
+      max_electric_power = EXCLUDED.max_electric_power,
+      multi_port_charging_allowed = EXCLUDED.multi_port_charging_allowed,
+      price_per_kwh = EXCLUDED.price_per_kwh,
+      latitude = EXCLUDED.latitude,
+      longitude = EXCLUDED.longitude,
+      updated_at = CURRENT_TIMESTAMP
   `;
   await client.query(query, values);
 }
 
-// Main function to manage the database connection
-async function main() {
-  const client = new Client(PG_CONFIG);
-
+// Get stations from database
+async function getStationsFromDB(client) {
   try {
-    console.log("Connecting to the database...");
-    await client.connect();
-    console.log("Database connected");
-
-    await fetchSearchData(client);
+    const query = 'SELECT station_id FROM stations';
+    const result = await client.query(query);
+    return result.rows;
   } catch (error) {
-    console.error("Error in main execution", error);
-  } finally {
-    console.log("Closing the database connection...");
-    await client.end();
-    console.log("Database connection closed");
+    console.error('Error fetching stations from database:', error);
+    throw error;
   }
 }
 
-// Start the process
-main();
+// Process stations from a list
+async function processStationList(client, stationList, source = 'api') {
+  for (const station of stationList) {
+    const stationId = source === 'api' ? station.id : station.station_id;
+    console.log(`Processing station ${stationId} from ${source}`);
+    
+    if (source === 'api') {
+      await fetchEVSEData(client, stationId);
+    } else {
+      await processStation(client, stationId);
+    }
+  }
+}
+
+// Main function to manage the database connection
+async function main(source = 'api') {
+  const client = new Client(PG_CONFIG);
+  
+  try {
+    await client.connect();
+    
+    if (source === 'api') {
+      // Get stations from Shell API
+      const searchData = await fetchSearchData(client);
+      await processStationList(client, searchData.data, 'api');
+    } else if (source === 'db') {
+      // Get stations from database
+      const stations = await getStationsFromDB(client);
+      await processStationList(client, stations, 'db');
+    } else {
+      throw new Error('Invalid source specified. Use "api" or "db"');
+    }
+    
+  } catch (error) {
+    console.error('Error in main process:', error);
+  } finally {
+    await client.end();
+  }
+}
+
+// Export the main function to be called with different sources
+module.exports = { main };
+
+// If running directly (not imported as a module)
+if (require.main === module) {
+  // Default to API source when run directly
+  main('db');
+}

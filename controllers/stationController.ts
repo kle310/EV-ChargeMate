@@ -56,6 +56,19 @@ export class StationController {
     res.json(status);
   });
 
+  getStations = catchAsync(async (req: Request, res: Response): Promise<void> => {
+    const stations = await this.stationModel.getStations();
+    res.status(200).json({
+      status: 'success',
+      data: stations
+    });
+  });
+
+  // Non-API method for internal use (like views)
+  async fetchStationsForMap(): Promise<Station[]> {
+    return this.stationModel.getStations();
+  }
+
   async getAllStations(): Promise<Station[]> {
     const result = await this.pool.query("SELECT * FROM stations");
     return result.rows;

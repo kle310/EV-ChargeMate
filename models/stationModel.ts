@@ -127,6 +127,22 @@ export class StationModel extends BaseModel {
     }
   }
 
+  async getStations(): Promise<Station[]> {
+    const query = `
+      SELECT station_id, name, latitude, longitude, price_per_kwh 
+      FROM stations 
+      WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    `;
+
+    try {
+      const { rows } = await this.pool.query(query);
+      return rows;
+    } catch (error) {
+      console.error('Error fetching stations:', error);
+      throw error;
+    }
+  }
+
   async getAllStations(): Promise<Station[]> {
     const query = `
       SELECT *
