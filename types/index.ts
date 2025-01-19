@@ -15,6 +15,8 @@ export interface Station {
   multi_port_charging_allowed: boolean;
   price_per_kwh: number;
   availability_status: boolean;
+  latitude: number;
+  longitude: number;
   created_at: Date;
   updated_at: Date;
 }

@@ -1,6 +1,12 @@
 import { wrapInLayout } from './layout';
 import { Station } from '../types';
 
+interface LocationGroup {
+  latitude: number;
+  longitude: number;
+  stations: Station[];
+}
+
 export const generateMapView = (stations: Station[]): string => {
   const mapStyles = `
     #map {
@@ -11,15 +17,30 @@ export const generateMapView = (stations: Station[]): string => {
     }
     .leaflet-popup-content {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      max-height: 400px;
+      overflow-y: auto;
     }
     .station-popup {
       padding: 10px;
     }
-    .station-popup h3 {
-      margin: 0 0 10px 0;
-      color: #333;
+    .station-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
-    .station-popup p {
+    .station-item {
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+    .station-item:last-child {
+      border-bottom: none;
+    }
+    .station-item h3 {
+      margin: 0 0 5px 0;
+      color: #333;
+      font-size: 1.1em;
+    }
+    .station-item p {
       margin: 5px 0;
       color: #666;
     }
@@ -27,9 +48,35 @@ export const generateMapView = (stations: Station[]): string => {
       font-weight: bold;
       color: #28a745;
     }
+    .station-count {
+      background: #28a745;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
   `;
 
-  const stationsJson = JSON.stringify(stations);
+  // Group stations by location
+  const locationGroups = stations.reduce((groups: { [key: string]: LocationGroup }, station) => {
+    const key = `${station.latitude},${station.longitude}`;
+    if (!groups[key]) {
+      groups[key] = {
+        latitude: station.latitude,
+        longitude: station.longitude,
+        stations: []
+      };
+    }
+    groups[key].stations.push(station);
+    return groups;
+  }, {});
+
+  const locationGroupsJson = JSON.stringify(Object.values(locationGroups));
 
   const content = `
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -47,30 +94,48 @@ export const generateMapView = (stations: Station[]): string => {
         attribution: 'OpenStreetMap contributors'
       }).addTo(map);
 
-      // Add markers for each station
-      const stations = ${stationsJson};
+      // Custom icon function based on station count
+      function createCustomIcon(count) {
+        return L.divIcon({
+          html: '<div class="station-count">' + count + '</div>',
+          className: 'custom-marker',
+          iconSize: [24, 24]
+        });
+      }
+
+      // Add markers for each location group
+      const locationGroups = ${locationGroupsJson};
       
-      stations.forEach(station => {
-        const marker = L.marker([station.latitude, station.longitude])
+      locationGroups.forEach(group => {
+        const marker = L.marker(
+          [group.latitude, group.longitude], 
+          { icon: createCustomIcon(group.stations.length) }
+        )
           .addTo(map)
-          .bindPopup(\`
-            <div class="station-popup">
-              <h3>\${station.name}</h3>
-              <p>Station ID: \${station.station_id}</p>
-              <p class="station-price">Price: $\${station.price_per_kwh}/kWh</p>
-              <p>
-                <a href="https://www.google.com/maps/dir/?api=1&destination=\${station.latitude},\${station.longitude}" 
-                   target="_blank" rel="noopener noreferrer">
-                  Get Directions
-                </a>
-              </p>
-            </div>
-          \`);
+          .bindPopup(
+            '<div class="station-popup">' +
+              '<div class="station-list">' +
+                group.stations.map(station => 
+                  '<div class="station-item">' +
+                    '<h3>' + station.name + '</h3>' +
+                    '<p>Station ID: <a href="/station/' + station.station_id + '">' + station.station_id + '</a></p>' +
+                    '<p class="station-price">Price: $' + station.price_per_kwh + '/kWh</p>' +
+                    '<p>' +
+                      '<a href="https://www.google.com/maps/dir/?api=1&destination=' + station.latitude + ',' + station.longitude + '" ' +
+                         'target="_blank" rel="noopener noreferrer">' +
+                        'Get Directions' +
+                      '</a>' +
+                    '</p>' +
+                  '</div>'
+                ).join('') +
+              '</div>' +
+            '</div>'
+          );
       });
 
       // Fit the map bounds to show all markers
-      if (stations.length > 0) {
-        const bounds = L.latLngBounds(stations.map(s => [s.latitude, s.longitude]));
+      if (locationGroups.length > 0) {
+        const bounds = L.latLngBounds(locationGroups.map(g => [g.latitude, g.longitude]));
         map.fitBounds(bounds);
       }
     </script>
