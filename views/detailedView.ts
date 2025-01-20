@@ -236,14 +236,21 @@ export const generateDetailedView = (
       ? "charging"
       : "unknown"
   }">View Live Status</a>
-         
         </div>
       </div>
 
       <div class="info-grid">
         <div class="info-item">
           <div class="info-label">Address</div>
-          <div class="info-value">${station.address}</div>
+          <div class="info-value">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${
+              station.latitude
+            },${station.longitude}" 
+              target="_blank" 
+              rel="noopener noreferrer">
+              ${station.address}
+            </a>
+          </div>
         </div>
         <div class="info-item">
           <div class="info-label">Max Power Output</div>
