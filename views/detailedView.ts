@@ -236,15 +236,7 @@ export const generateDetailedView = (
       ? "charging"
       : "unknown"
   }">View Live Status</a>
-          <div class="price-tag ${
-            station.price_per_kwh == 0 ? "free-tag" : "paid-tag"
-          }">
-            ${
-              station.price_per_kwh == 0
-                ? "Free"
-                : `$${station.price_per_kwh}/kWh`
-            }
-          </div>
+         
         </div>
       </div>
 
@@ -268,34 +260,8 @@ export const generateDetailedView = (
 
     <div class="usage-history">
       <h2>
-        Usage History (Last 7 Days)
-        ${(() => {
-          const totalSessions = availability.filter((status) => {
-            const statusDate = new Date(status.timestamp);
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            return (
-              statusDate >= sevenDaysAgo && status.plug_status === "Charging"
-            );
-          }).length;
-
-          let activityLevel;
-          if (totalSessions < 70) {
-            activityLevel = "low";
-          } else if (totalSessions <= 150) {
-            activityLevel = "moderate";
-          } else {
-            activityLevel = "busy";
-          }
-
-          const activityText = {
-            low: "Low Activity Week",
-            moderate: "Moderate Activity Week",
-            busy: "Busy Week",
-          }[activityLevel];
-
-          return `<span class="activity-badge ${activityLevel}">${activityText}</span>`;
-        })()}
+        Usage Insights
+       
       </h2>
       <div class="usage-stats">
         ${(() => {
@@ -424,10 +390,10 @@ export const generateDetailedView = (
               weekday: "long",
             });
             const isValidDay = (d: string): d is keyof typeof dayUsage => {
-                return d in dayUsage;
+              return d in dayUsage;
             };
             if (isValidDay(day)) {
-                dayUsage[day] += status.duration;
+              dayUsage[day] += status.duration;
             }
           });
 
@@ -464,7 +430,7 @@ export const generateDetailedView = (
     </div>
 
     <div class="availability-history">
-      <h2>Usage Details</h2>
+      <h2>Recent Status History</h2>
       <table>
         <thead>
           <tr>
@@ -475,20 +441,26 @@ export const generateDetailedView = (
         </thead>
         <tbody>
           ${(() => {
+            const MAX_ROWS = 12; // Limit for rows to return
             let table = "";
-            let isFirstRow = true; // Flag to identify the first row
+            let isFirstRow = true;
+            let rowCount = 0;
 
-            availability.forEach((row) => {
-              // Skip rows where duration is less than 5, except the first row
-              if (row.duration < 5 && !isFirstRow) {
-                return; // Skip this iteration
-              }
+            // Filter and limit the rows to process
+            const filteredRows = availability.filter((row, index) => {
+              if (rowCount >= MAX_ROWS) return false; // Stop processing after MAX_ROWS
+              if (row.duration < 5 && !isFirstRow) return false; // Skip rows with duration < 5 except the first
+              rowCount++; // Increment row count for included rows
+              isFirstRow = false; // Set isFirstRow to false after the first iteration
+              return true; // Include the row
+            });
 
-              let rowColor = "";
-
-              if (row.plug_status?.trim() === "Available") {
-                rowColor = 'style="background-color: #2ecc71; color: white;"';
-              }
+            // Generate table rows
+            filteredRows.forEach((row) => {
+              const rowColor =
+                row.plug_status?.trim() === "Available"
+                  ? 'style="background-color: #2ecc71; color: white;"'
+                  : "";
 
               const startTimeStr = row.timestamp.toLocaleTimeString("en-US", {
                 weekday: "long",
@@ -497,17 +469,15 @@ export const generateDetailedView = (
                 hour12: true,
               });
 
-              table += `<tr ${rowColor}>`;
-              table += `<td>${row.plug_status || ""}</td>`;
-              table += `<td>${startTimeStr || ""}</td>`;
-              table += `<td>${row.duration || ""}</td>`;
-              table += "</tr>";
-
-              // After the first row, set the flag to false
-              isFirstRow = false;
+              table += `
+                <tr ${rowColor}>
+                  <td>${row.plug_status || ""}</td>
+                  <td>${startTimeStr || ""}</td>
+                  <td>${row.duration || ""}</td>
+                </tr>
+              `;
             });
-
-            return table; // Ensure the table string is returned
+            return table; // Return the generated table HTML
           })()}
         </tbody>
       </table>
