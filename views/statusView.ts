@@ -1,44 +1,51 @@
-import { wrapInLayout } from './layout';
-import { ProgressResponse } from '../types';
+import { wrapInLayout } from "./layout";
+import { ProgressResponse } from "../types";
 
-export const generateStatusPage = (status: ProgressResponse, stationId: string): string => {
-  const getStatusStyle = (statusType: string): { bg: string; color: string } => {
+export const generateStatusPage = (
+  status: ProgressResponse,
+  stationId: string
+): string => {
+  const getStatusStyle = (
+    statusType: string
+  ): { bg: string; color: string } => {
     switch (statusType.toLowerCase()) {
-      case 'available':
+      case "available":
         return {
-          bg: '#e8f5e9',
-          color: '#2ecc71'
+          bg: "#e8f5e9",
+          color: "#2ecc71",
         };
-      case 'charging':
+      case "charging":
         return {
-          bg: '#fee8e7',
-          color: '#e74c3c'
+          bg: "#fee8e7",
+          color: "#e74c3c",
         };
       default:
         return {
-          bg: '#f5f5f5',
-          color: '#95a5a6'
+          bg: "#f5f5f5",
+          color: "#95a5a6",
         };
     }
   };
 
-  const { bg: backgroundColor, color: textColor } = getStatusStyle(status.status_type);
+  const { bg: backgroundColor, color: textColor } = getStatusStyle(
+    status.status_type
+  );
 
   const styles = `
     .status-container {
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       min-height: calc(100vh - 100px);
       margin: 0;
       background-color: white;
-      padding: 20px;
+      padding: 200px 10px;
     }
     .status-box {
       background-color: ${backgroundColor};
       width: 100%;
-      max-width: 600px;
+      max-width: 800px;
       border-radius: 8px;
       padding: 30px 20px;
       text-align: center;
@@ -51,7 +58,7 @@ export const generateStatusPage = (status: ProgressResponse, stationId: string):
       font-weight: 600;
     }
     .status-value {
-      font-size: 8em;
+      font-size: 30em;
       line-height: 1;
       font-weight: bold;
       color: ${textColor};
@@ -98,23 +105,26 @@ export const generateStatusPage = (status: ProgressResponse, stationId: string):
 
   const getStatusText = (statusType: string): string => {
     switch (statusType.toLowerCase()) {
-      case 'available':
-        return 'Available';
-      case 'charging':
-        return 'In Use';
+      case "available":
+        return "Available";
+      case "charging":
+        return "In Use";
       default:
-        return 'Unknown Status';
+        return "Unknown Status";
     }
   };
 
   const content = `
+  <a href="/station/${stationId}" class="back-link">← Back to Station Details</a>
     <div class="status-container">
+      
       <div class="status-box">
         <div class="status-type">${getStatusText(status.status_type)}</div>
-        <div class="status-value" id="statusNumber">${status.status_duration}</div>
+        <div class="status-value" id="statusNumber">${
+          status.status_duration
+        }</div>
         <div class="status-label">minutes</div>
       </div>
-      <a href="/station/${stationId}" class="back-link">← Back to Station Details</a>
     </div>
     <script>
       async function updateStatus() {
@@ -171,7 +181,7 @@ export const generateStatusPage = (status: ProgressResponse, stationId: string):
     </script>
   `;
 
-  return wrapInLayout(content, `Station ${stationId} Status`, 'status', styles);
+  return wrapInLayout(content, `Station ${stationId} Status`, "status", styles);
 };
 
 export default { generateStatusPage };
