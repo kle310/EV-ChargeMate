@@ -50,8 +50,8 @@ async function fetchStationData(stationId) {
   }
 }
 
-// Refactored function to insert station data into the database
-async function insertStationData(client, stationId, data) {
+// Refactored function to collect station data
+async function collectStationData(stationId, data) {
   try {
     const ports = data.data.evses?.[0]?.ports || [];
 
@@ -68,10 +68,16 @@ async function insertStationData(client, stationId, data) {
 
     // Determine the status of the station
     const status = determinePortStatus(ccsPorts);
-    // Insert status into the database
-    await saveStationStatus(client, stationId, status);
+    
+    return {
+      stationId,
+      plugType: status?.plugType || null,
+      portOcppStatus: status?.portOcppStatus || null,
+      timestamp: new Date()
+    };
   } catch (error) {
     console.error(`Error processing station ${stationId}:`, error);
+    return null;
   }
 }
 
@@ -103,21 +109,40 @@ function determinePortStatus(evses) {
   return evses[0]; // Single port or no valid ports
 }
 
-// Function to save station status to the database
-async function saveStationStatus(client, stationId, status) {
+// Function to batch save station statuses to the database
+async function batchSaveStationStatus(client, stationData) {
   const query = `
     INSERT INTO station_status (station_id, plug_type, plug_status, timestamp)
     VALUES ($1, $2, $3, $4);
   `;
 
-  const values = [
-    stationId,
-    status?.plugType || null,
-    status?.portOcppStatus || null,
-    new Date(),
-  ];
+  try {
+    // Start a transaction
+    await client.query('BEGIN');
 
-  await client.query(query, values);
+    // Create an array of promises for all the insert operations
+    const insertPromises = stationData
+      .filter(data => data !== null)
+      .map(data => 
+        client.query(query, [
+          data.stationId,
+          data.plugType,
+          data.portOcppStatus,
+          data.timestamp
+        ])
+      );
+
+    // Execute all inserts in parallel
+    await Promise.all(insertPromises);
+
+    // Commit the transaction
+    await client.query('COMMIT');
+    console.log(`Successfully inserted ${stationData.length} station status records`);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error in batch insert, rolling back:', error);
+    throw error;
+  }
 }
 
 // Fetch and store status data for all stations
@@ -129,15 +154,24 @@ async function processStations(stations) {
     await client.connect();
     console.log("Connected to database");
 
-    for (const station of stations) {
+    // Collect all station data first
+    const stationDataPromises = stations.map(async station => {
       try {
-        console.log(`Processing station ${station.id}`);
-        const data = await fetchStationData(station.id); // Fetch station data
-        await insertStationData(client, station.id, data); // Store data in the database
+        console.log(`Fetching data for station ${station.id}`);
+        const data = await fetchStationData(station.id);
+        return collectStationData(station.id, data);
       } catch (error) {
-        console.error(`Error processing station ${station.id}`, error);
+        console.error(`Error fetching station ${station.id}`, error);
+        return null;
       }
-    }
+    });
+
+    // Wait for all fetches to complete
+    const stationData = await Promise.all(stationDataPromises);
+    
+    // Batch save all station data
+    await batchSaveStationStatus(client, stationData);
+    
   } catch (error) {
     console.error("Error with database operations", error);
   } finally {
