@@ -11,10 +11,17 @@ test("homepage has title", async ({ page }) => {
   await expect(page).toHaveTitle("Home - EV ChargeMate");
 });
 
-test("homepage tab navigation", async ({ page }) => {
-  // Click on the 'About' tab and ensure it navigates to the correct page
-  await page.getByRole("button", { name: "About" }).click();
+test("can filter by city", async ({ page }) => {
+  // Assert that the page title is correct
+  await page.locator("#citySelector").selectOption("monterey_park");
   await expect(
-    page.getByRole("heading", { name: "About EV ChargeMate" })
+    page.getByRole("link", {
+      name: "Monterey Park $0.20/kWh 4100 Market Place Drive, Suite EV CHARGING",
+    })
   ).toBeVisible();
+  await expect(page.locator("body")).toContainText("Monterey Park");
+  await expect(page.locator("body")).toContainText("$0.20/kWh");
+  await expect(page.locator("body")).toContainText(
+    "4100 Market Place Drive, Suite EV"
+  );
 });

@@ -8,7 +8,7 @@
     "postbuild": "cp -r ./public ./dist/public",
     "start": "npm run build && node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only app.ts",
-    "test": "playwright test",
+    "test": "npx playwright test",
     "test:report": "playwright show-report"
   },
   "author": "kle",
