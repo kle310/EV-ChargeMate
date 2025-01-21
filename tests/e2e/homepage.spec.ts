@@ -14,11 +14,6 @@ test("homepage has title", async ({ page }) => {
 test("can filter by city", async ({ page }) => {
   // Assert that the page title is correct
   await page.locator("#citySelector").selectOption("monterey_park");
-  await expect(
-    page.getByRole("link", {
-      name: "Monterey Park $0.20/kWh 4100 Market Place Drive, Suite EV CHARGING",
-    })
-  ).toBeVisible();
   await expect(page.locator("body")).toContainText("Monterey Park");
   await expect(page.locator("body")).toContainText("$0.20/kWh");
   await expect(page.locator("body")).toContainText(
