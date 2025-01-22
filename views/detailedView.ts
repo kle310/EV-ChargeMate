@@ -415,7 +415,8 @@ export const generateDetailedView = (
           }
 
           // Find maximum usage for scaling
-          const maxUsage = Math.max(...Object.values(dayUsage));
+          // const maxUsage = Math.max(...Object.values(dayUsage));
+          const maxUsage = 1440;
 
           return Object.entries(dayUsage)
             .map(([day, minutes]) => {
