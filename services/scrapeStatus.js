@@ -149,7 +149,7 @@ async function batchSaveStationStatus(client, stationData) {
 }
 
 // Fetch and store status data for all stations
-async function processStations(stations) {
+const processStations = async (stations) => {
   const client = new Client(PG_CONFIG);
 
   try {
@@ -157,10 +157,13 @@ async function processStations(stations) {
     await client.connect();
     console.log("Connected to database");
 
+    const totalStations = stations.length;
+    const delayBetweenRequests = 45000 / totalStations; // Spread over 45 seconds
+
     const stationDataPromises = stations.map(async (station, index) => {
       try {
-        // Introduce a delay of 1000ms
-        await delay(100);
+        // Introduce a delay based on the number of stations
+        await delay(delayBetweenRequests * index);
 
         const data = await fetchStationData(station.id);
         return collectStationData(station.id, data);
@@ -181,7 +184,7 @@ async function processStations(stations) {
     await client.end();
     console.log("Database connection closed");
   }
-}
+};
 
 // Fetch stations from the database
 async function getStationsFromDB() {
