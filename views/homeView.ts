@@ -182,7 +182,7 @@ export const generateHomeView = (
     </div>
 
     <div class="section">
-      <h2>Paid Chargers</h2>
+      <h2>Discounted Chargers</h2>
       <div class="station-list">
         ${filterStationsByCity(stations.paid)
           .map(
