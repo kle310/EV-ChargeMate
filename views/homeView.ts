@@ -3,7 +3,7 @@ import { GroupedChargers } from "../types";
 
 export const generateHomeView = (
   stations: GroupedChargers,
-  selectedCity: string = "all"
+  selectedCity: string = ""
 ): string => {
   const homeStyles = `
     .section {
@@ -123,7 +123,7 @@ export const generateHomeView = (
   `;
 
   const filterStationsByCity = (stationList: any[]) => {
-    if (selectedCity === "all") return stationList;
+    if (selectedCity === "") return stationList;
 
     return stationList.filter((station) => {
       const stationCity = station.city?.toLowerCase().replace(/\s+/g, "_");
@@ -134,9 +134,7 @@ export const generateHomeView = (
   const content = `
     <div class="city-selector">
       <select id="citySelector" onchange="window.location.href = '/?city=' + encodeURIComponent(this.value)">
-        <option value="all" ${
-          selectedCity === "all" ? "selected" : ""
-        }>All Cities</option>
+        <option value="" ${selectedCity === "" ? "selected" : ""}>Choose City</option>
         ${[
           ...new Set([
             ...stations.free.map((station) => station.city),
