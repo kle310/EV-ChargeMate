@@ -137,25 +137,28 @@ export const generateHomeView = (
         <option value="" ${selectedCity === "" ? "selected" : ""}>Choose City</option>
         ${[
           ...new Set([
-            ...stations.free.map((station) => station.city),
-            ...stations.paid.map((station) => station.city),
+            ...stations.free.map((station) => station.city.toLowerCase()),
+            ...stations.paid.map((station) => station.city.toLowerCase()),
           ]),
         ]
           .filter((city) => city) // Remove any undefined or empty cities
           .sort()
           .map((city) => {
-            const cityValue = city.toLowerCase().replace(/\s+/g, "_");
+            const cityValue = city.replace(/\s+/g, "_");
+            const cityDisplay = city
+              .split(" ")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" "); // Capitalize each word in the city name
             return `
               <option value="${cityValue}" 
                 ${selectedCity === cityValue ? "selected" : ""}>
-                ${city}
+                ${cityDisplay}
               </option>
             `;
           })
           .join("")}
       </select>
     </div>
-
     <div class="section">
       <h2>Free Chargers</h2>
       <div class="station-list">
