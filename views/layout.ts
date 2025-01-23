@@ -83,9 +83,6 @@ export const generateHeader = (activePage: string): string => {
           <a href="/map" class="nav-link${
             activePage === "map" ? " active" : ""
           }">Map</a>
-          <a href="/favorites" class="nav-link${
-            activePage === "favorites" ? " active" : ""
-          }">Favorites</a>
           <a href="/about" class="nav-link${
             activePage === "about" ? " active" : ""
           }">About</a>

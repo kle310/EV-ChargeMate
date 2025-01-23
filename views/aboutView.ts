@@ -65,9 +65,9 @@ export const generateAboutView = (): string => {
         <li>Real-time charging station availability</li>
         <li>Detailed station information including pricing and power output</li>
         <li>User-friendly interface for easy navigation</li>
-        <li>Comprehensive station search and filtering</li>
-        <li>Favorite stations for quick access</li>
+        <li>Usage statistics and predictions</li>
         <li>Interactive map for station locations</li>
+        <li>Chatbot for questions and support</li>
       </ul>
     </div>
 
