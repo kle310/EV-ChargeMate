@@ -29,6 +29,9 @@ const CRON_CONFIG = {
   timezone: process.env.CRON_TIMEZONE,
 };
 
+// Utility function to create a delay
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Fetch station data
 async function fetchStationData(stationId) {
   try {
@@ -154,10 +157,11 @@ async function processStations(stations) {
     await client.connect();
     console.log("Connected to database");
 
-    // Collect all station data first
-    const stationDataPromises = stations.map(async station => {
+    const stationDataPromises = stations.map(async (station, index) => {
       try {
-        console.log(`Fetching data for station ${station.id}`);
+        // Introduce a delay of 1000ms
+        await delay(100);
+
         const data = await fetchStationData(station.id);
         return collectStationData(station.id, data);
       } catch (error) {
@@ -168,10 +172,9 @@ async function processStations(stations) {
 
     // Wait for all fetches to complete
     const stationData = await Promise.all(stationDataPromises);
-    
+
     // Batch save all station data
     await batchSaveStationStatus(client, stationData);
-    
   } catch (error) {
     console.error("Error with database operations", error);
   } finally {
