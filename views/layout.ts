@@ -113,6 +113,7 @@ export const wrapInLayout = (
             gtag('config', 'G-NQVYSLJQ1W');
         </script>
         <title>${title} - EV ChargeMate</title>
+        <link rel="icon" href="/public/favicon.ico" type="image/x-icon">
         <style>
           ${commonStyles}
           ${additionalStyles}
