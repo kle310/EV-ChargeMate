@@ -13,36 +13,8 @@ export class StationController {
     this.pool = pool;
   }
 
-  private handleRequest = catchAsync(
-    async (
-      req: Request,
-      res: Response,
-      fetchFunction: (stationId: string) => Promise<any>,
-      responseHandler: (res: Response, data: any, stationId: string) => void
-    ): Promise<void> => {
-      const { station_id } = req.params;
-
-      if (station_id === "favicon.ico") {
-        res.status(204).send();
-        return;
-      }
-
-      if (!station_id) {
-        throw new AppError("Missing station_id in URL", 400);
-      }
-
-      const data = await fetchFunction(station_id);
-      responseHandler(res, data, station_id);
-    }
-  );
-
   getStatus = catchAsync(async (req: Request, res: Response): Promise<void> => {
     const { station_id } = req.params;
-
-    if (station_id === "favicon.ico") {
-      res.status(204).send();
-      return;
-    }
 
     if (!station_id) {
       throw new AppError("Missing station_id in URL", 400);
@@ -56,11 +28,32 @@ export class StationController {
     res.json(status);
   });
 
-  getStations = catchAsync(async (req: Request, res: Response): Promise<void> => {
-    const stations = await this.stationModel.getStations();
+  getStations = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const stations = await this.stationModel.getStations();
+      res.status(200).json({
+        status: "success",
+        data: stations,
+      });
+    }
+  );
+
+  getStatusByCity = catchAsync(async (req: Request, res: Response) => {
+    const city = decodeURIComponent(req.query.city as string)?.replace(
+      /_/g,
+      " "
+    );
+
+    if (!city) {
+      throw new AppError("City parameter is required", 400);
+    }
+
+    const stationStatuses = await this.stationModel.fetchStationStatusByCity(
+      city
+    );
     res.status(200).json({
-      status: 'success',
-      data: stations
+      status: "success",
+      data: stationStatuses,
     });
   });
 
