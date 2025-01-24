@@ -32,7 +32,7 @@ const stationRouter = createStationRouter(stationController);
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/station", stationRouter);
+app.use("/api", stationRouter);
 
 app.get("/", async (req, res) => {
   const stations = await stationModel.getAllStations();

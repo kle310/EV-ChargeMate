@@ -138,7 +138,7 @@ export class StationModel extends BaseModel {
       const { rows } = await this.pool.query(query);
       return rows;
     } catch (error) {
-      console.error('Error fetching stations:', error);
+      console.error("Error fetching stations:", error);
       throw error;
     }
   }
@@ -156,6 +156,40 @@ export class StationModel extends BaseModel {
     } catch (error) {
       console.error("Error in getAllStations:", error);
       throw error;
+    }
+  }
+
+  async fetchStationStatusByCity(city: string): Promise<ProgressResponse[]> {
+    const query = `
+      WITH latest_status AS (
+        SELECT 
+          s.station_id,
+          ss.plug_status,
+          ss.timestamp,
+          ROW_NUMBER() OVER (PARTITION BY s.station_id ORDER BY ss.timestamp DESC) as rn
+        FROM station_status ss
+        INNER JOIN stations s ON s.station_id = ss.station_id
+        WHERE LOWER(s.city) = LOWER($1)
+      )
+      SELECT 
+        station_id,
+        plug_status,
+        timestamp
+      FROM latest_status
+      WHERE rn = 1
+      ORDER BY timestamp DESC;
+    `;
+
+    try {
+      const { rows }: QueryResult<ProgressResponse> = await this.pool.query(
+        query,
+        [city]
+      );
+      return rows;
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch station status for city ${city}: ${error}`
+      );
     }
   }
 }

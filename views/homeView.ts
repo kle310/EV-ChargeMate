@@ -134,7 +134,9 @@ export const generateHomeView = (
   const content = `
     <div class="city-selector">
       <select id="citySelector" onchange="window.location.href = '/?city=' + encodeURIComponent(this.value)">
-        <option value="" ${selectedCity === "" ? "selected" : ""}>Choose City</option>
+        <option value="" ${
+          selectedCity === "" ? "selected" : ""
+        }>Choose City</option>
         ${[
           ...new Set([
             ...stations.free.map((station) => station.city.toLowerCase()),
@@ -204,34 +206,30 @@ export const generateHomeView = (
     </div>
 
     <script>
-      async function fetchStationStatus(stationId, elementId) {
-        const statusElement = document.getElementById(elementId);
+      async function fetchStationStatus() {
         try {
-          const response = await fetch(\`/station/\${stationId}/status\`);
-          const data = await response.json();
+          const city = document.getElementById('citySelector').value;
+          const response = await fetch(\`/api/status?city=\${city}\`);
+          const { data } = await response.json();
 
-          const status = data.status_type?.toLowerCase() || '';
-          const statusClass = ['available', 'charging'].includes(status) ? \`status-\${status}\` : 'status-unknown';
-          const statusText = status.toUpperCase();
+          data.forEach((station) => {
+            const statusElement = document.getElementById(\`status-\${station.station_id}\`);
+            const status = station.plug_status?.toLowerCase() || '';
+            const statusClass = ['available', 'charging'].includes(status) ? \`status-\${status}\` : 'status-unknown';
+            const statusText = status.toUpperCase();
+            
 
-          statusElement.textContent = statusText;
-          statusElement.className = \`station-status \${statusClass}\`;
-          
+            statusElement.textContent = statusText;
+            statusElement.className = \`station-status \${statusClass}\`;
+          });
         } catch (error) {
-          statusElement.textContent = 'Error';
-          statusElement.className = 'station-status status-unavailable';
+          console.error('Error fetching station status:', error);
         }
       }
 
-      window.onload = function() {
-        const statusElements = document.querySelectorAll('[data-station-id]');
-        statusElements.forEach(element => {
-          const stationId = element.getAttribute('data-station-id');
-          fetchStationStatus(stationId, \`status-\${stationId}\`);
-        });
-      };
+      fetchStationStatus();
+      document.getElementById('citySelector').addEventListener('change', fetchStationStatus);
     </script>
   `;
-
   return wrapInLayout(content, "Home", "home", homeStyles);
 };
