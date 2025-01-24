@@ -1,8 +1,8 @@
 import { wrapInLayout } from "./layout";
-import { ProgressResponse } from "../types";
+import { StationStatus } from "../types";
 
 export const generateStatusPage = (
-  status: ProgressResponse,
+  status: StationStatus,
   stationId: string
 ): string => {
   const getStatusStyle = (
@@ -28,7 +28,7 @@ export const generateStatusPage = (
   };
 
   const { bg: backgroundColor, color: textColor } = getStatusStyle(
-    status.status_type
+    status.plug_status
   );
 
   const styles = `
@@ -119,19 +119,26 @@ export const generateStatusPage = (
     <div class="status-container">
       
       <div class="status-box">
-        <div class="status-type">${getStatusText(status.status_type)}</div>
-        <div class="status-value" id="statusNumber">${
-          status.status_duration
-        }</div>
+        <div class="status-type">${getStatusText(status.plug_status)}</div>
+        <div class="status-value" id="statusNumber">${status.duration}</div>
         <div class="status-label">minutes</div>
       </div>
     </div>
     <script>
       async function updateStatus() {
         try {
-          const response = await fetch('/station/${stationId}/status');
-          const data = await response.json();
+          const response = await fetch('/api/status/?station_id=${stationId}');
+          const d = await response.json();
+          const data = Array.isArray(d.data) ? d.data[0] : d.data;
+          
+          if (!data || !data.plug_status) {
+            console.error('No valid status data received');
+            return;
+          }
+
           const getNewStyle = (statusType) => {
+            if (!statusType) return { bg: '#f5f5f5', color: '#999999' };
+            
             switch (statusType.toLowerCase()) {
               case 'available':
                 return {
@@ -151,7 +158,7 @@ export const generateStatusPage = (
             }
           };
           
-          const { bg, color } = getNewStyle(data.status_type);
+          const { bg, color } = getNewStyle(data.plug_status);
           const statusBox = document.querySelector('.status-box');
           const statusType = document.querySelector('.status-type');
           const statusValue = document.querySelector('.status-value');
@@ -161,7 +168,7 @@ export const generateStatusPage = (
           statusValue.style.color = color;
           
           statusType.textContent = (() => {
-            switch (data.status_type.toLowerCase()) {
+            switch (data.plug_status.toLowerCase()) {
               case 'available':
                 return 'Available';
               case 'charging':
@@ -171,7 +178,7 @@ export const generateStatusPage = (
             }
           })();
           
-          document.getElementById('statusNumber').textContent = data.status_duration.toString();
+          document.getElementById('statusNumber').textContent = data.duration.toString();
         } catch (error) {
           console.error('Error fetching status:', error);
         }

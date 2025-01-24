@@ -290,7 +290,7 @@ export const generateDetailedView = (
             (status) => status.plug_status === "Charging"
           ).length;
 
-          let activityLevel;
+          let activityLevel: 'low' | 'moderate' | 'busy';
           if (chargingSessions < 70) {
             activityLevel = "low";
           } else if (chargingSessions <= 150) {
@@ -405,7 +405,7 @@ export const generateDetailedView = (
           });
 
           // Determine activity level based on total sessions
-          let activityLevel;
+          let activityLevel: 'low' | 'moderate' | 'busy';
           if (chargingSessions.length < 70) {
             activityLevel = "low";
           } else if (chargingSessions.length <= 150) {
@@ -414,8 +414,6 @@ export const generateDetailedView = (
             activityLevel = "busy";
           }
 
-          // Find maximum usage for scaling
-          // const maxUsage = Math.max(...Object.values(dayUsage));
           const maxUsage = 1440;
 
           return Object.entries(dayUsage)

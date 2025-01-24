@@ -6,8 +6,7 @@ export const createStationRouter = (
 ): Router => {
   const router = Router();
 
-  router.get("/:station_id/status", stationController.getStatus);
-  router.get("/status", stationController.getStatusByCity);
+  router.get("/status", stationController.getStatus);
 
   return router;
 };

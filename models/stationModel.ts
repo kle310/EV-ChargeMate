@@ -1,5 +1,5 @@
 import { Pool, QueryResult } from "pg";
-import { Station, StationStatus, ProgressResponse } from "../types";
+import { Station, StationStatus } from "../types";
 import { BaseModel } from "./BaseModel";
 
 export class StationModel extends BaseModel {
@@ -7,9 +7,9 @@ export class StationModel extends BaseModel {
     super(pool);
   }
 
-  async fetchStationStatus(station_id: string): Promise<ProgressResponse> {
+  async fetchStationStatus(station_id: string): Promise<StationStatus> {
     const query = `
-    SELECT plug_status
+    SELECT station_id, plug_type, plug_status, timestamp
     FROM station_status
     WHERE station_id = $1 
       AND timestamp >= NOW() - INTERVAL '1 days'
@@ -20,17 +20,16 @@ export class StationModel extends BaseModel {
       const { rows: filteredResults }: QueryResult<StationStatus> =
         await this.pool.query(query, [station_id]);
 
-      const progressResponse: ProgressResponse = {
-        status_type: "",
-        status_duration: 0,
-      };
+      const stationStatus: StationStatus | null = filteredResults.length
+        ? filteredResults[0]
+        : null;
 
-      if (!filteredResults.length) {
-        return progressResponse;
+      if (!stationStatus) {
+        throw new Error(`No status found for station ${station_id}`);
       }
 
       // Identify the first status
-      const firstStatus = filteredResults[0].plug_status.trim();
+      const firstStatus = stationStatus.plug_status.trim();
       let durationCount = 0;
 
       // Count how many consecutive rows have the same status
@@ -41,12 +40,13 @@ export class StationModel extends BaseModel {
           break; // Stop counting when the status changes
         }
       }
-
-      // Update the response
-      progressResponse.status_type = firstStatus;
-      progressResponse.status_duration = durationCount;
-
-      return progressResponse;
+      return {
+        station_id: stationStatus.station_id.trim(),
+        plug_type: stationStatus.plug_type.trim(),
+        plug_status: firstStatus || "",
+        duration: durationCount,
+        timestamp: stationStatus.timestamp,
+      };
     } catch (error) {
       console.error(
         `Error fetching station status for station_id ${station_id}:`,
@@ -159,11 +159,12 @@ export class StationModel extends BaseModel {
     }
   }
 
-  async fetchStationStatusByCity(city: string): Promise<ProgressResponse[]> {
+  async fetchStationStatusByCity(city: string): Promise<StationStatus[]> {
     const query = `
       WITH latest_status AS (
         SELECT 
           s.station_id,
+          ss.plug_type,
           ss.plug_status,
           ss.timestamp,
           ROW_NUMBER() OVER (PARTITION BY s.station_id ORDER BY ss.timestamp DESC) as rn
@@ -173,6 +174,7 @@ export class StationModel extends BaseModel {
       )
       SELECT 
         station_id,
+        plug_type,
         plug_status,
         timestamp
       FROM latest_status
@@ -181,7 +183,7 @@ export class StationModel extends BaseModel {
     `;
 
     try {
-      const { rows }: QueryResult<ProgressResponse> = await this.pool.query(
+      const { rows }: QueryResult<StationStatus> = await this.pool.query(
         query,
         [city]
       );
