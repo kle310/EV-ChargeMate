@@ -25,7 +25,13 @@ export class StationModel extends BaseModel {
         : null;
 
       if (!stationStatus) {
-        throw new Error(`No status found for station ${station_id}`);
+        return {
+          station_id,
+          plug_type: "Unknown",
+          plug_status: "Unknown",
+          timestamp: new Date(),
+          duration: 0,
+        };
       }
 
       // Identify the first status

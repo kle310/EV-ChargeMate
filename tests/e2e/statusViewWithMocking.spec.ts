@@ -7,10 +7,16 @@ const testStatus = async (
   expectedText: string,
   expectedColor: string
 ): Promise<void> => {
-  await page.route("**/station/12585A/status", async (route) => {
+  await page.route("**/api/status/?station_id=12585A", async (route) => {
     const json = {
-      status_type: type,
-      status_duration: duration,
+      status: "success",
+      data: {
+        station_id: "12585A",
+        plug_type: type,
+        plug_status: type,
+        duration: duration,
+        timestamp: new Date().toISOString(),
+      },
     };
     await route.fulfill({ json });
   });

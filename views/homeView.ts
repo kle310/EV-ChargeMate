@@ -207,27 +207,39 @@ export const generateHomeView = (
 
     <script>
       async function fetchStationStatus() {
+        const city = document.getElementById('citySelector').value;
+        if (!city) {
+          // Reset all status indicators to "Select City" if no city is selected
+          document.querySelectorAll('[id^="status-"]').forEach(element => {
+            element.textContent = "Select City";
+            element.className = "station-status status-unknown";
+          });
+          return;
+        }
+
         try {
-          const city = document.getElementById('citySelector').value;
-          const response = await fetch(\`/api/status?city=\${city}\`);
+          const response = await fetch('/api/status?city=' + encodeURIComponent(city));
           const { data } = await response.json();
 
           data.forEach((station) => {
-            const statusElement = document.getElementById(\`status-\${station.station_id}\`);
+            const statusElement = document.getElementById('status-' + station.station_id);
+            if (!statusElement) return;
             const status = station.plug_status?.toLowerCase() || '';
-            const statusClass = ['available', 'charging'].includes(status) ? \`status-\${status}\` : 'status-unknown';
+            const statusClass = ['available', 'charging'].includes(status) ? 'status-' + status : 'status-unknown';
             const statusText = status.toUpperCase();
             
-
             statusElement.textContent = statusText;
-            statusElement.className = \`station-status \${statusClass}\`;
+            statusElement.className = 'station-status ' + statusClass;
           });
         } catch (error) {
           console.error('Error fetching station status:', error);
         }
       }
 
-      fetchStationStatus();
+      // Only fetch initially if a city is already selected
+      if (document.getElementById('citySelector').value) {
+        fetchStationStatus();
+      }
       document.getElementById('citySelector').addEventListener('change', fetchStationStatus);
     </script>
   `;
