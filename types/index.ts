@@ -2,8 +2,8 @@ export interface StationStatus {
   station_id: string;
   plug_type: string;
   plug_status: string;
-  timestamp: Date;
   duration: number;
+  timestamp: Date;
 }
 
 export interface Station {
@@ -19,11 +19,6 @@ export interface Station {
   longitude: number;
   created_at: Date;
   updated_at: Date;
-}
-
-export interface ProgressResponse {
-  status_type: string;
-  status_duration: number;
 }
 
 export interface GroupedChargers {

@@ -6,11 +6,11 @@ import { StationController } from "./controllers/stationController";
 import { createStationRouter } from "./routes/stationRoutes";
 import { generateHomeView } from "./views/homeView";
 import { generateAboutView } from "./views/aboutView";
-import { generateFavoritesView } from "./views/favoritesView";
+import { generateFavoritesView } from "./views/chatbotView";
 import { generateMapView } from "./views/mapView";
 import { generateDetailedView } from "./views/detailedView";
+import { generateStatusPage } from "./views/liveView";
 import path from "path";
-import { generateStatusPage } from "./views/statusView";
 
 config();
 
@@ -36,7 +36,7 @@ app.use("/api", stationRouter);
 
 app.get("/", async (req, res) => {
   const stations = await stationModel.getAllStations();
-  const selectedCity = req.query.city as string || 'all';
+  const selectedCity = (req.query.city as string) || "all";
 
   const groupedStations = {
     free: stations.filter((station) => Number(station.price_per_kwh) === 0),

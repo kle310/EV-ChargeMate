@@ -14,18 +14,33 @@ export class StationController {
   }
 
   getStatus = catchAsync(async (req: Request, res: Response): Promise<void> => {
-    const { station_id } = req.params;
+    const stationId = req.query.station_id
+      ? decodeURIComponent(req.query.station_id as string)
+      : undefined;
+    const city = req.query.city
+      ? decodeURIComponent(req.query.city as string).replace(/_/g, " ")
+      : undefined;
 
-    if (!station_id) {
-      throw new AppError("Missing station_id in URL", 400);
+    if (!stationId && !city) {
+      throw new AppError("Missing station_id or city in URL", 400);
     }
 
-    const status = await this.stationModel.fetchStationStatus(station_id);
-    if (!status) {
-      throw new AppError("Station not found", 404);
+    if (city) {
+      const stationStatuses = await this.stationModel.fetchStationStatusByCity(
+        city
+      );
+      res.status(200).json({
+        status: "success",
+        data: stationStatuses,
+      });
+      return;
     }
 
-    res.json(status);
+    const status = await this.stationModel.fetchStationStatus(stationId!);
+    res.status(200).json({
+      status: "success",
+      data: status,
+    });
   });
 
   getStations = catchAsync(
@@ -37,25 +52,6 @@ export class StationController {
       });
     }
   );
-
-  getStatusByCity = catchAsync(async (req: Request, res: Response) => {
-    const city = decodeURIComponent(req.query.city as string)?.replace(
-      /_/g,
-      " "
-    );
-
-    if (!city) {
-      throw new AppError("City parameter is required", 400);
-    }
-
-    const stationStatuses = await this.stationModel.fetchStationStatusByCity(
-      city
-    );
-    res.status(200).json({
-      status: "success",
-      data: stationStatuses,
-    });
-  });
 
   // Non-API method for internal use (like views)
   async fetchStationsForMap(): Promise<Station[]> {
