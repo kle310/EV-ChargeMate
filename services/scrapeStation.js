@@ -26,10 +26,10 @@ const API_CONFIG = {
 };
 
 const body = JSON.stringify({
-  latitude: 34.1387312,
-  longitude: -118.1311252,
-  radius: 10,
-  limit: 10,
+  latitude: 34.040428,
+  longitude: -118.465899,
+  radius: 100,
+  limit: 1000,
   offset: 0,
   searchKey: "",
   recentSearchText: "",
@@ -135,7 +135,7 @@ async function insertStationData(client, stationId, data) {
       data.data.evses[0].ports[0].portPrice.priceList[0].priceComponents[0]
         .price,
       data.data.latitude,
-      data.data.longitude
+      data.data.longitude,
     ];
 
     // Check if "test" is found in any of the fields (case-insensitive)
@@ -168,7 +168,7 @@ async function insertStationData(client, stationId, data) {
       data.data.evses[0].ports[0].portPrice.priceList[0].priceComponents[0]
         .price,
       data.data.latitude,
-      data.data.longitude
+      data.data.longitude,
     ];
 
     // console.log(values);
@@ -212,22 +212,22 @@ async function saveStationStatus(client, stationId, values) {
 // Get stations from database
 async function getStationsFromDB(client) {
   try {
-    const query = 'SELECT station_id FROM stations';
+    const query = "SELECT station_id FROM stations";
     const result = await client.query(query);
     return result.rows;
   } catch (error) {
-    console.error('Error fetching stations from database:', error);
+    console.error("Error fetching stations from database:", error);
     throw error;
   }
 }
 
 // Process stations from a list
-async function processStationList(client, stationList, source = 'api') {
+async function processStationList(client, stationList, source = "api") {
   for (const station of stationList) {
-    const stationId = source === 'api' ? station.id : station.station_id;
+    const stationId = source === "api" ? station.id : station.station_id;
     console.log(`Processing station ${stationId} from ${source}`);
-    
-    if (source === 'api') {
+
+    if (source === "api") {
       await fetchEVSEData(client, stationId);
     } else {
       await processStation(client, stationId);
@@ -236,26 +236,25 @@ async function processStationList(client, stationList, source = 'api') {
 }
 
 // Main function to manage the database connection
-async function main(source = 'api') {
+async function main(source = "api") {
   const client = new Client(PG_CONFIG);
-  
+
   try {
     await client.connect();
-    
-    if (source === 'api') {
+
+    if (source === "api") {
       // Get stations from Shell API
       const searchData = await fetchSearchData(client);
-      await processStationList(client, searchData.data, 'api');
-    } else if (source === 'db') {
+      await processStationList(client, searchData.data, "api");
+    } else if (source === "db") {
       // Get stations from database
       const stations = await getStationsFromDB(client);
-      await processStationList(client, stations, 'db');
+      await processStationList(client, stations, "db");
     } else {
       throw new Error('Invalid source specified. Use "api" or "db"');
     }
-    
   } catch (error) {
-    console.error('Error in main process:', error);
+    console.error("Error in main process:", error);
   } finally {
     await client.end();
   }
@@ -267,5 +266,5 @@ module.exports = { main };
 // If running directly (not imported as a module)
 if (require.main === module) {
   // Default to API source when run directly
-  main('db');
+  main("db");
 }
