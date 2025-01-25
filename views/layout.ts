@@ -1,68 +1,114 @@
 const commonStyles = `
+  :root {
+    --primary-color: #2ecc71;
+    --text-color: #333;
+    --bg-color: #f5f5f5;
+    --nav-height: 60px;
+  }
+
   body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f5f5f5;
+    background-color: var(--bg-color);
+    color: var(--text-color);
   }
+
   .nav-container {
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    height: var(--nav-height);
+    display: flex;
+    align-items: center;
   }
+
   .header {
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-direction: row;
-    padding: 10px 20px;
+    padding: 0 24px;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
   }
+
   .logo-title {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
   }
+
   .logo {
-    max-width: 100px;
+    max-width: 40px;
     height: auto;
+    transition: transform 0.2s ease;
   }
+
+  .logo:hover {
+    transform: scale(1.05);
+  }
+
   h1 {
-    color: #333;
+    color: var(--text-color);
     text-align: left;
-    font-size: 2.5em;
+    font-size: 1.5em;
     margin: 0;
-    font-weight: bold;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
+
   .nav-menu {
     display: flex;
-    gap: 30px;
+    gap: 8px;
     align-items: center;
   }
+
   .nav-link {
-    color: #333;
+    color: var(--text-color);
     text-decoration: none;
-    font-size: 1.1em;
-    padding: 5px 10px;
-    border-radius: 4px;
+    font-size: 0.95em;
+    padding: 6px 12px;
+    border-radius: 6px;
     transition: all 0.2s ease;
+    font-weight: 500;
   }
+
   .nav-link:hover {
-    background-color: #f5f5f5;
-    color: #2ecc71;
+    background-color: rgba(46, 204, 113, 0.1);
+    color: var(--primary-color);
   }
+
   .nav-link.active {
-    color: #2ecc71;
-    font-weight: bold;
+    color: var(--primary-color);
+    background-color: rgba(46, 204, 113, 0.1);
+    font-weight: 600;
   }
+
   .content {
     max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 20px;
+    margin: 24px auto;
+    padding: 0 24px;
+  }
+
+  @media (max-width: 768px) {
+    .header {
+      padding: 0 16px;
+    }
+
+    h1 {
+      font-size: 1.3em;
+    }
+
+    .nav-link {
+      padding: 6px 10px;
+    }
   }
 `;
 
