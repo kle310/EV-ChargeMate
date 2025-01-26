@@ -1,12 +1,14 @@
 import express from "express";
 import { Pool } from "pg";
 import { config } from "dotenv";
+import session from "express-session";
 import { StationModel } from "./models/stationModel";
 import { StationController } from "./controllers/stationController";
 import { createStationRouter } from "./routes/stationRoutes";
+import { createChatRouter } from "./routes/chatRoutes";
 import { generateHomeView } from "./views/homeView";
 import { generateAboutView } from "./views/aboutView";
-import { generateFavoritesView } from "./views/chatbotView";
+import { generateChatbotView } from "./views/chatbotView";
 import { generateMapView } from "./views/mapView";
 import { generateDetailedView } from "./views/detailedView";
 import { generateStatusPage } from "./views/liveView";
@@ -14,9 +16,9 @@ import path from "path";
 
 config();
 
-const app = express();
 const port = process.env.PORT || 3000;
 
+// Initialize database connection
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -26,13 +28,31 @@ const pool = new Pool({
 });
 
 const stationModel = new StationModel(pool);
+
+// Initialize Express app
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-secret-key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === "production" },
+  })
+);
+
 const stationController = new StationController(stationModel, pool);
 const stationRouter = createStationRouter(stationController);
+const chatRouter = createChatRouter(stationModel);
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api", stationRouter);
+app.use("/", chatRouter);
 
 app.get("/", async (req, res) => {
   const stations = await stationModel.getAllStations();
@@ -60,8 +80,8 @@ app.get("/map", async (req, res) => {
   }
 });
 
-app.get("/favorites", (req, res) => {
-  res.send(generateFavoritesView());
+app.get("/chat", (req, res) => {
+  res.send(generateChatbotView());
 });
 
 app.get("/station/:id", async (req, res) => {
