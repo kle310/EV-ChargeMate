@@ -37,7 +37,6 @@ const searchBody = JSON.stringify({
   clearAllFilter: false,
   connectors: [],
   mappedCpos: ["EVC", "FL2", "GRL", "CPI"],
-  // mappedCpos: ["CPI"],
   comingSoon: false,
   status: [],
   excludePricing: true,
@@ -212,20 +211,18 @@ async function processStations() {
   }
 }
 
-processStations();
+// Cron job setup - run every minute
+const job = new CronJob(
+  "* * * * *", // Run every minute
+  async () => {
+    console.log(`Running status update job at ${new Date().toISOString()}`);
+    await processStations();
+  },
+  null,
+  true,
+  "America/Los_Angeles"
+);
 
-// // Cron job setup - run every minute
-// const job = new CronJob(
-//   "* * * * *", // Run every minute
-//   async () => {
-//     console.log(`Running status update job at ${new Date().toISOString()}`);
-//     await processStations();
-//   },
-//   null,
-//   true,
-//   "America/Los_Angeles"
-// );
-
-// // Start the cron job
-// job.start();
-// console.log("Status update cron job started - running every minute");
+// Start the cron job
+job.start();
+console.log("Status update cron job started - running every minute");
