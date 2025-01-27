@@ -65,12 +65,12 @@ export const generateHomeView = (
       background-color: #2ecc71;
       color: white;
     }
-    .status-charging {
+    .status-busy {
       background-color: #e74c3c;
       color: white;
     }
     .status-unknown {
-      background-color: #d3d3d3;
+      background-color: #95a5a6;
       color: white;
     }
     .status-loading {
@@ -233,8 +233,13 @@ export const generateHomeView = (
             const statusElement = document.getElementById('status-' + station.station_id);
             if (!statusElement) return;
             const status = station.plug_status?.toLowerCase() || '';
-            const statusClass = ['available', 'charging'].includes(status) ? 'status-' + status : 'status-unknown';
-            const statusText = status.toUpperCase();
+            const statusClass = !status ? 'status-loading' :
+                              status === 'available' ? 'status-available' : 
+                              status === 'busy' ? 'status-busy' : 
+                              'status-unknown';
+            const statusText = !status ? 'LOADING...' :
+                             status === 'busy' ? 'IN USE' : 
+                             status.toUpperCase();
             
             statusElement.textContent = statusText;
             statusElement.className = 'station-status ' + statusClass;

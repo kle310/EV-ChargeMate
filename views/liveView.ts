@@ -8,16 +8,21 @@ export const generateStatusPage = (
   const getStatusStyle = (
     statusType: string
   ): { bg: string; color: string } => {
-    switch (statusType.toLowerCase()) {
+    switch (statusType?.toLowerCase()) {
       case "available":
         return {
           bg: "#e8f5e9",
           color: "#2ecc71",
         };
-      case "charging":
+      case "busy":
         return {
           bg: "#fee8e7",
           color: "#e74c3c",
+        };
+      case "loading":
+        return {
+          bg: "#fef9e7",
+          color: "#f1c40f",
         };
       default:
         return {
@@ -104,13 +109,11 @@ export const generateStatusPage = (
   `;
 
   const getStatusText = (statusType: string): string => {
-    switch (statusType.toLowerCase()) {
-      case "available":
-        return "Available";
-      case "charging":
-        return "In Use";
+    switch (statusType?.toUpperCase()) {
+      case "BUSY":
+        return "IN USE";
       default:
-        return "Unknown Status";
+        return statusType.toUpperCase();
     }
   };
 
@@ -145,7 +148,12 @@ export const generateStatusPage = (
                   bg: '#e8f5e9',
                   color: '#2ecc71'
                 };
-              case 'charging':
+              case 'busy':
+                return {
+                  bg: '#fee8e7',
+                  color: '#e74c3c'
+                };
+              case 'faulted':
                 return {
                   bg: '#fee8e7',
                   color: '#e74c3c'
@@ -171,8 +179,10 @@ export const generateStatusPage = (
             switch (data.plug_status.toLowerCase()) {
               case 'available':
                 return 'Available';
-              case 'charging':
+              case 'busy':
                 return 'In Use';
+              case 'faulted':
+                return 'Faulted';
               default:
                 return 'Unknown Status';
             }
