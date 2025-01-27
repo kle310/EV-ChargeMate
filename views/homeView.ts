@@ -204,7 +204,7 @@ export const generateHomeView = (
       </select>
     </div>
     <div class="section">
-      <h2>Free Chargers</h2>
+      <h3>Free Chargers</h3>
       <div class="station-list">
         ${filterStationsByCity(stations.free)
           .map(
@@ -222,7 +222,9 @@ export const generateHomeView = (
               ${station.name}
             </div>
             <div class="station-info-container">
-              <div class="station-power">⚡ ${station.max_electric_power}kW</div>
+              <div class="station-power">⚡ ${
+                station.max_electric_power
+              }kW</div>
               <div class="station-price free-tag">✓ Free</div>
             </div>
             <div class="station-location">
@@ -241,12 +243,14 @@ export const generateHomeView = (
     </div>
 
     <div class="section">
-      <h2>Discounted Chargers</h2>
+      <h3>Discounted Chargers</h3>
       <div class="station-list">
         ${filterStationsByCity(stations.paid)
           .map(
             (station) => `
-          <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">
+          <a href="/station/${
+            station.station_id
+          }" class="station-card" data-station-id="${station.station_id}">
             <div class="station-name">
               <img 
                 src="/images/${station.cpo_id.toLowerCase()}-icon.png" 
@@ -257,13 +261,19 @@ export const generateHomeView = (
               ${station.name}
             </div>
             <div class="station-info-container">
-              <div class="station-power">⚡ ${station.max_electric_power}kW</div>
-              <div class="station-price paid-tag">💰 $${station.price}/${station.price_unit}</div>
+              <div class="station-power">⚡ ${
+                station.max_electric_power
+              }kW</div>
+              <div class="station-price paid-tag">💰 $${station.price}/${
+              station.price_unit
+            }</div>
             </div>
             <div class="station-location">
               ${station.address}
             </div>
-            <div id="status-${station.station_id}" class="station-status status-loading">
+            <div id="status-${
+              station.station_id
+            }" class="station-status status-loading">
               Loading...
             </div>
           </a>
