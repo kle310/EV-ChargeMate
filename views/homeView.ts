@@ -8,81 +8,117 @@ export const generateHomeView = (
   const homeStyles = `
     .section {
       background-color: white;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     h2 {
-      color: #444;
+      color: #2c3e50;
       margin-top: 0;
+      font-size: 1.8em;
+      margin-bottom: 20px;
     }
     .station-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
     }
     .station-card {
       background-color: #fff;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 15px;
-      transition: transform 0.2s;
+      border: 1px solid #e1e8ed;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
       cursor: pointer;
       text-decoration: none;
       color: inherit;
-      display: block;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
     .station-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      border-color: #3498db;
     }
     .station-name {
-      font-weight: bold;
-      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 1.1em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2c3e50;
     }
-    .station-price {
-      color: #666;
+    .cpo-icon {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+    .station-info-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
     }
     .station-power {
-      color: #666;
+      background-color: #f8f9fa;
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #2c3e50;
       font-size: 0.9em;
-      margin: 4px 0;
       font-weight: 500;
     }
-    .station-location {
-      color: #888;
+    .station-price {
+      padding: 4px 10px;
+      border-radius: 6px;
       font-size: 0.9em;
-      margin-top: 8px;
-    }
-    .station-status {
-      margin-top: 10px;
-      padding: 5px 10px;
-      border-radius: 4px;
-      display: inline-block;
-    }
-    .status-available {
-      background-color: #2ecc71;
-      color: white;
-    }
-    .status-busy {
-      background-color: #e74c3c;
-      color: white;
-    }
-    .status-unknown {
-      background-color: #95a5a6;
-      color: white;
-    }
-    .status-loading {
-      background-color: #f1c40f;
-      color: white;
+      font-weight: 500;
     }
     .free-tag {
+      background-color: #e8f5e9;
       color: #2ecc71;
-      font-weight: bold;
     }
     .paid-tag {
+      background-color: #fff8e1;
+      color: #f39c12;
+    }
+    .station-location {
+      color: #7f8c8d;
+      font-size: 0.95em;
+      margin: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .station-location::before {
+      content: "📍";
+      font-size: 1em;
+    }
+    .station-status {
+      margin-top: auto;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      font-weight: 500;
+      text-align: center;
+    }
+    .status-available {
+      background-color: #e8f5e9;
+      color: #2ecc71;
+    }
+    .status-busy {
+      background-color: #fdeaea;
       color: #e74c3c;
+    }
+    .status-unknown {
+      background-color: #f5f6fa;
+      color: #95a5a6;
+    }
+    .status-loading {
+      background-color: #fff8e1;
+      color: #f39c12;
     }
     .city-selector {
       margin-bottom: 20px;
@@ -173,14 +209,28 @@ export const generateHomeView = (
         ${filterStationsByCity(stations.free)
           .map(
             (station) => `
-          <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">
-            <div class="station-name">${station.name}</div>
-            <div class="station-price free-tag">Free</div>
-            <div class="station-power">${station.max_electric_power}kW</div>
+          <a href="/station/${
+            station.station_id
+          }" class="station-card" data-station-id="${station.station_id}">
+            <div class="station-name">
+              <img 
+                src="/images/${station.cpo_id.toLowerCase()}-icon.png" 
+                alt="${station.cpo_id} logo" 
+                class="cpo-icon"
+                title="${station.cpo_id}"
+              />
+              ${station.name}
+            </div>
+            <div class="station-info-container">
+              <div class="station-power">⚡ ${station.max_electric_power}kW</div>
+              <div class="station-price free-tag">✓ Free</div>
+            </div>
             <div class="station-location">
               ${station.address}
             </div>
-            <div id="status-${station.station_id}" class="station-status status-loading">
+            <div id="status-${
+              station.station_id
+            }" class="station-status status-loading">
               Loading...
             </div>
           </a>
@@ -197,9 +247,19 @@ export const generateHomeView = (
           .map(
             (station) => `
           <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">
-            <div class="station-name">${station.name}</div>
-            <div class="station-price paid-tag">$${station.price}/${station.price_unit}</div>
-            <div class="station-power">${station.max_electric_power}kW</div>
+            <div class="station-name">
+              <img 
+                src="/images/${station.cpo_id.toLowerCase()}-icon.png" 
+                alt="${station.cpo_id} logo" 
+                class="cpo-icon"
+                title="${station.cpo_id}"
+              />
+              ${station.name}
+            </div>
+            <div class="station-info-container">
+              <div class="station-power">⚡ ${station.max_electric_power}kW</div>
+              <div class="station-price paid-tag">💰 $${station.price}/${station.price_unit}</div>
+            </div>
             <div class="station-location">
               ${station.address}
             </div>
