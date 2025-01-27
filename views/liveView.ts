@@ -37,73 +37,85 @@ export const generateStatusPage = (
   );
 
   const styles = `
-    .status-container {
+    .status-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
       align-items: center;
-      min-height: calc(100vh - 100px);
-      margin: 0;
-      background-color: white;
-      padding: 200px 10px;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #2c3e50;
+      text-decoration: none;
+      font-size: 1.1em;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      transition: all 0.2s;
+      width: fit-content;
+      align-self: flex-start;
+    }
+    .back-link:hover {
+      background-color: #f8f9fa;
+      transform: translateX(-4px);
+    }
+    .status-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      text-align: center;
+      margin-top: 0;
+      width: 100%;
+      max-width: 600px;
     }
     .status-box {
       background-color: ${backgroundColor};
-      width: 100%;
-      max-width: 800px;
-      border-radius: 8px;
-      padding: 30px 20px;
-      text-align: center;
+      border-radius: 12px;
+      padding: 40px;
       transition: all 0.3s ease;
     }
     .status-type {
-      font-size: 2em;
+      font-size: 2.4em;
       color: ${textColor};
-      margin-bottom: 10px;
+      margin-bottom: 24px;
       font-weight: 600;
     }
     .status-value {
-      font-size: 30em;
+      font-size: 6em;
       line-height: 1;
       font-weight: bold;
       color: ${textColor};
-      margin: 20px 0;
+      margin: 24px 0;
     }
     .status-label {
-      font-size: 1.4em;
-      color: #666;
-      margin-bottom: 10px;
-    }
-    .back-link {
-      display: inline-block;
-      margin-top: 30px;
-      color: #666;
-      text-decoration: none;
       font-size: 1.2em;
-      padding: 10px;
-    }
-    .back-link:hover {
-      color: #333;
+      color: #7f8c8d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
     @media (max-width: 768px) {
+      .status-page {
+        padding: 16px;
+      }
       .status-container {
-        min-height: calc(100vh - 80px);
+        padding: 0;
       }
       .status-box {
-        padding: 40px 20px;
+        padding: 32px 20px;
       }
       .status-type {
-        font-size: 2.5em;
+        font-size: 2em;
       }
       .status-value {
-        font-size: 10em;
+        font-size: 4.5em;
       }
       .status-label {
-        font-size: 1.6em;
-      }
-      .back-link {
-        font-size: 1.4em;
-        padding: 15px;
+        font-size: 1em;
       }
     }
   `;
@@ -118,13 +130,14 @@ export const generateStatusPage = (
   };
 
   const content = `
-  <a href="/station/${stationId}" class="back-link">← Back to Station Details</a>
-    <div class="status-container">
-      
-      <div class="status-box">
-        <div class="status-type">${getStatusText(status.plug_status)}</div>
-        <div class="status-value" id="statusNumber">${status.duration}</div>
-        <div class="status-label">minutes</div>
+    <div class="status-page">
+      <a href="/station/${stationId}" class="back-link">← Back to Station Details</a>
+      <div class="status-container">
+        <div class="status-box">
+          <div class="status-type">${getStatusText(status.plug_status)}</div>
+          <div class="status-value" id="statusNumber">${status.duration}</div>
+          <div class="status-label">minutes</div>
+        </div>
       </div>
     </div>
     <script>
