@@ -1,5 +1,5 @@
 import { wrapInLayout } from "./layout";
-import { GroupedChargers } from "../types";
+import { GroupedChargers } from "../types/types";
 
 export const generateHomeView = (
   stations: GroupedChargers,
@@ -43,6 +43,12 @@ export const generateHomeView = (
     }
     .station-price {
       color: #666;
+    }
+    .station-power {
+      color: #666;
+      font-size: 0.9em;
+      margin: 4px 0;
+      font-weight: 500;
     }
     .station-location {
       color: #888;
@@ -170,6 +176,7 @@ export const generateHomeView = (
           <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">
             <div class="station-name">${station.name}</div>
             <div class="station-price free-tag">Free</div>
+            <div class="station-power">${station.max_electric_power}kW</div>
             <div class="station-location">
               ${station.address}
             </div>
@@ -191,7 +198,8 @@ export const generateHomeView = (
             (station) => `
           <a href="/station/${station.station_id}" class="station-card" data-station-id="${station.station_id}">
             <div class="station-name">${station.name}</div>
-            <div class="station-price paid-tag">$${station.price_per_kwh}/kWh</div>
+            <div class="station-price paid-tag">$${station.price}/${station.price_unit}</div>
+            <div class="station-power">${station.max_electric_power}kW</div>
             <div class="station-location">
               ${station.address}
             </div>

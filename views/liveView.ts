@@ -1,5 +1,5 @@
 import { wrapInLayout } from "./layout";
-import { StationStatus } from "../types";
+import { StationStatus } from "../types/types";
 
 export const generateStatusPage = (
   status: StationStatus,

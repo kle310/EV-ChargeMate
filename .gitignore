@@ -136,3 +136,5 @@ playwright-report/
 playwright-results/
 test-results/
 database/
+debug/
+migrations/

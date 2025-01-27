@@ -13,12 +13,16 @@ export interface Station {
   city: string;
   max_electric_power: number;
   multi_port_charging_allowed: boolean;
-  price_per_kwh: number;
+  price: number;
+  price_unit: string;
   availability_status: boolean;
   latitude: number;
   longitude: number;
   created_at: Date;
   updated_at: Date;
+  cpo_id: string;
+  realtime_enabled: boolean;
+  status?: string;
 }
 
 export interface GroupedChargers {

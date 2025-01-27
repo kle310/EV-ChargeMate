@@ -1,5 +1,5 @@
 import { Pool, QueryResult } from "pg";
-import { Station, StationStatus } from "../types";
+import { Station, StationStatus } from "../types/types";
 import { BaseModel } from "./BaseModel";
 
 export class StationModel extends BaseModel {
@@ -135,7 +135,7 @@ export class StationModel extends BaseModel {
 
   async getStations(): Promise<Station[]> {
     const query = `
-      SELECT station_id, name, latitude, longitude, price_per_kwh 
+      SELECT *
       FROM stations 
       WHERE latitude IS NOT NULL AND longitude IS NOT NULL
     `;
