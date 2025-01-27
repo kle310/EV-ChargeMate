@@ -18,8 +18,8 @@ export const generateDetailedView = (
     .station-details {
       background-color: white;
       border-radius: 8px;
-      padding: 30px;
-      margin-bottom: 30px;
+      padding: 24px;
+      margin-bottom: 24px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .station-header {
@@ -31,14 +31,14 @@ export const generateDetailedView = (
       position: relative;
     }
     .station-name {
-      font-size: 1.8em;
+      font-size: 1.6em;
       margin: 0 0 16px 0;
       color: #333;
     }
     .station-info {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
     .station-address {
@@ -67,7 +67,7 @@ export const generateDetailedView = (
       flex-wrap: wrap;
     }
     .price-tag, .power-tag, .cpo-tag, .realtime-tag {
-      font-size: 0.9em;
+      font-size: 0.85em;
       padding: 4px 8px;
       border-radius: 4px;
       font-weight: 500;
@@ -102,10 +102,11 @@ export const generateDetailedView = (
       position: absolute;
       top: 20px;
       right: 20px;
-      padding: 6px 12px;
+      padding: 5px 12px;
       border-radius: 20px;
       text-decoration: none;
       color: white;
+      font-size: 0.9em;
     }
     .status-link.available {
       background-color: #2ecc71;
@@ -138,9 +139,6 @@ export const generateDetailedView = (
     .info-section {
       margin-bottom: 24px;
     }
-    .info-section:last-child {
-      margin-bottom: 0;
-    }
     .info-item {
       display: flex;
       align-items: center;
@@ -151,7 +149,7 @@ export const generateDetailedView = (
       border-bottom: none;
     }
     .info-label {
-      flex: 0 0 140px;
+      flex: 0 0 130px;
       color: #666;
       font-weight: 500;
     }
@@ -159,32 +157,88 @@ export const generateDetailedView = (
       flex: 1;
       color: #333;
     }
-    .availability-history {
-      margin-top: 30px;
+    .usage-history {
+      margin-top: 20px;
     }
-    .availability-history table {
+    .usage-history h2 {
+      font-size: 1.4em;
+      margin: 0 0 15px 0;
+    }
+    .usage-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .stat-value {
+      font-size: 1.6em;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 0.9em;
+      color: #666;
+    }
+    .usage-chart {
+      margin-top: 20px;
+    }
+    .day-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .day-label {
+      width: 100px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .bar-container {
+      flex-grow: 1;
+      background-color: #e9ecef;
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      background-color: #2ecc71;
+      border-radius: 10px;
+    }
+    .bar.low {
+      background-color: #2ecc71;
+    }
+    .bar.moderate {
+      background-color: #f1c40f;
+    }
+    .bar.busy {
+      background-color: #e74c3c;
+    }
+    .availability-history {
+      margin-top: 20px;
+    }
+    .availability-history h2 {
+      font-size: 1.4em;
+      margin: 0 0 15px 0;
+    }
+    table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
+      font-size: 0.9em;
     }
-    .availability-history th {
-      background-color: #f8f9fa;
-      padding: 12px;
+    th, td {
+      padding: 10px;
       text-align: left;
-      border-bottom: 2px solid #dee2e6;
+      border-bottom: 1px solid #eee;
     }
-    .availability-history td {
-      padding: 12px;
-      border-bottom: 1px solid #dee2e6;
-    }
-    .availability-history tr.available {
-      background-color: #d4edda;
-    }
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
+    th {
+      font-weight: 500;
+      color: #666;
     }
     .free-tag {
       background-color: #e8f5e9;
@@ -193,26 +247,6 @@ export const generateDetailedView = (
     .paid-tag {
       background-color: #fbe9e7;
       color: #e74c3c;
-    }
-    .availability-history {
-      background-color: white;
-      border-radius: 8px;
-      padding: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .usage-history {
-      background-color: white;
-      border-radius: 8px;
-      padding: 30px;
-      margin-bottom: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .usage-history h2 {
-      margin-bottom: 20px;
-      color: #333;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
     }
     .activity-badge {
       font-size: 0.9em;
@@ -240,63 +274,6 @@ export const generateDetailedView = (
     }
     .stat-value.busy {
       color: #e74c3c;
-    }
-    .bar.low {
-      background-color: #2ecc71;
-    }
-    .bar.moderate {
-      background-color: #f1c40f;
-    }
-    .bar.busy {
-      background-color: #e74c3c;
-    }
-    .usage-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-    }
-    .stat-card {
-      background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 4px;
-      text-align: center;
-    }
-    .stat-value {
-      font-size: 1.8em;
-      font-weight: 600;
-      color: #2ecc71;
-      margin-bottom: 5px;
-    }
-    .stat-label {
-      color: #666;
-      font-size: 0.9em;
-    }
-    .usage-chart {
-      margin-top: 20px;
-      padding: 20px;
-      background-color: #f8f9fa;
-      border-radius: 4px;
-    }
-    .day-bar {
-      display: flex;
-      align-items: center;
-      margin: 10px 0;
-    }
-    .day-label {
-      width: 100px;
-      color: #666;
-    }
-    .bar-container {
-      flex-grow: 1;
-      background-color: #e9ecef;
-      height: 20px;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .bar {
-      height: 100%;
-      background-color: #2ecc71;
-      border-radius: 10px;
     }
   `;
 
