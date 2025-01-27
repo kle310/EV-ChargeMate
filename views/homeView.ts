@@ -13,10 +13,10 @@ export const generateHomeView = (
       margin-bottom: 24px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    h2 {
+    h3 {
       color: #2c3e50;
       margin-top: 0;
-      font-size: 1.8em;
+      font-size: 1.2em;
       margin-bottom: 20px;
     }
     .station-list {
