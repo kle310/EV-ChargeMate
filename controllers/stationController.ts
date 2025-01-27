@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { StationModel } from "../models/stationModel";
 import { Pool } from "pg";
 import { AppError, catchAsync } from "../middleware/errorHandler";
-import { Station, StationStatus } from "../types";
+import { Station, StationStatus } from "../types/types";
 
 export class StationController {
   private stationModel: StationModel;

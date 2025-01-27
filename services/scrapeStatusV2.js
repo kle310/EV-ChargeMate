@@ -11,7 +11,7 @@ const PG_CONFIG = {
 };
 
 const API_CONFIG = {
-  search_url: process.env.SHELL_STATION_DETAILS,
+  search_url: process.env.SHELL_STATION_SEARCH,
   headers: {
     "User-Agent":
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
@@ -30,13 +30,14 @@ const searchBody = JSON.stringify({
   latitude: 34.040428,
   longitude: -118.465899,
   radius: 100,
-  limit: 1000,
+  limit: 10000,
   offset: 0,
   searchKey: "",
   recentSearchText: "",
   clearAllFilter: false,
   connectors: [],
-  mappedCpos: ["GRL"],
+  mappedCpos: ["EVC", "FL2", "GRL", "CPI"],
+  // mappedCpos: ["CPI"],
   comingSoon: false,
   status: [],
   excludePricing: true,
@@ -79,7 +80,7 @@ async function collectStationData(data) {
                 stationData.push({
                   station_id: evse.evseId,
                   plug_type: port.plugType || "UNKNOWN",
-                  plug_status: port.portOcppStatus || "UNKNOWN",
+                  plug_status: port.portStatus || "UNKNOWN",
                   timestamp: new Date().toISOString(),
                 });
               }
@@ -88,37 +89,37 @@ async function collectStationData(data) {
             else if (evse.ports.length === 2) {
               if (evse.multiPortChargingAllowed === false) {
                 // If multi-port charging not allowed, combine status
-                const portOcppStatus =
-                  ["Charging"].includes(evse.ports[0].portOcppStatus) ||
-                  ["Charging"].includes(evse.ports[1].portOcppStatus)
+                const portStatus =
+                  ["Charging"].includes(evse.ports[0].portStatus) ||
+                  ["Charging"].includes(evse.ports[1].portStatus)
                     ? "Charging"
-                    : evse.ports[0].portOcppStatus === "Available" ||
-                      evse.ports[1].portOcppStatus === "Available"
+                    : evse.ports[0].portStatus === "Available" ||
+                      evse.ports[1].portStatus === "Available"
                     ? "Available"
-                    : evse.ports[0].portOcppStatus;
+                    : evse.ports[0].portStatus;
 
                 stationData.push({
                   station_id: evse.evseId,
                   plug_type: "DUAL",
-                  plug_status: portOcppStatus,
+                  plug_status: portStatus,
                   timestamp: new Date().toISOString(),
                 });
               } else {
                 // If multi-port charging allowed, save each port separately
-                const portOcppStatus =
-                  ["Available"].includes(evse.ports[0].portOcppStatus) ||
-                  ["Available"].includes(evse.ports[1].portOcppStatus)
+                const portStatus =
+                  ["Available"].includes(evse.ports[0].portStatus) ||
+                  ["Available"].includes(evse.ports[1].portStatus)
                     ? "Available"
-                    : evse.ports[0].portOcppStatus === "Charging" &&
-                      evse.ports[1].portOcppStatus === "Charging"
+                    : evse.ports[0].portStatus === "Charging" &&
+                      evse.ports[1].portStatus === "Charging"
                     ? "Charging"
-                    : evse.ports[0].portOcppStatus;
+                    : evse.ports[0].portStatus;
                 for (const port of evse.ports) {
                   if (port) {
                     stationData.push({
                       station_id: evse.evseId,
                       plug_type: "DUAL",
-                      plug_status: port.portOcppStatus || "UNKNOWN",
+                      plug_status: port.portStatus || "UNKNOWN",
                       timestamp: new Date().toISOString(),
                     });
                   }
@@ -211,18 +212,20 @@ async function processStations() {
   }
 }
 
-// Cron job setup - run every minute
-const job = new CronJob(
-  "* * * * *", // Run every minute
-  async () => {
-    console.log(`Running status update job at ${new Date().toISOString()}`);
-    await processStations();
-  },
-  null,
-  true,
-  "America/Los_Angeles"
-);
+processStations();
 
-// Start the cron job
-job.start();
-console.log("Status update cron job started - running every minute");
+// // Cron job setup - run every minute
+// const job = new CronJob(
+//   "* * * * *", // Run every minute
+//   async () => {
+//     console.log(`Running status update job at ${new Date().toISOString()}`);
+//     await processStations();
+//   },
+//   null,
+//   true,
+//   "America/Los_Angeles"
+// );
+
+// // Start the cron job
+// job.start();
+// console.log("Status update cron job started - running every minute");

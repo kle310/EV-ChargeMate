@@ -10,44 +10,38 @@ const PG_CONFIG = {
 };
 
 const API_CONFIG = {
-  evse_url: process.env.SHELL_EVSE_DETAILS,
-  station_url: process.env.SHELL_STATION_DETAILS,
   search_url: process.env.SHELL_STATION_SEARCH,
   headers: {
-    Host: process.env.API_HEADERS_HOST,
-    "Content-Type": process.env.API_HEADERS_CONTENT_TYPE,
+    "User-Agent":
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
+    "Content-Type": "application/json",
     Cookie: process.env.API_HEADERS_COOKIE,
-    Accept: process.env.API_HEADERS_ACCEPT,
-    "User-Agent": process.env.API_HEADERS_USER_AGENT,
-    "Device-Authorization": process.env.API_HEADERS_DEVICE_AUTHORIZATION,
-    "Accept-Language": process.env.API_HEADERS_ACCEPT_LANGUAGE,
-    "Content-Encoding": process.env.API_HEADERS_CONTENT_ENCODING,
   },
 };
 
-const body = JSON.stringify({
+const searchBody = {
   latitude: 34.040428,
   longitude: -118.465899,
   radius: 100,
-  limit: 1000,
+  limit: 10000,
   offset: 0,
   searchKey: "",
   recentSearchText: "",
   clearAllFilter: false,
   connectors: [],
-  mappedCpos: ["GRL"],
+  mappedCpos: ["EVC", "FL2", "GRL", "CPI"],
   comingSoon: false,
   status: [],
   excludePricing: false,
-});
+};
 
-// Fetch station data
-async function fetchSearchData(client) {
+// Fetch station data from search endpoint
+async function fetchSearchData() {
   try {
-    const response = await fetch(`${API_CONFIG.search_url}`, {
+    const response = await fetch(API_CONFIG.search_url, {
       method: "POST",
       headers: API_CONFIG.headers,
-      body,
+      body: JSON.stringify(searchBody),
     });
 
     if (!response.ok) {
@@ -62,120 +56,89 @@ async function fetchSearchData(client) {
   }
 }
 
-// Fetch EVSE data
-async function fetchEVSEData(client, stationId) {
+async function processStation(client, station) {
   try {
-    const response = await fetch(`${API_CONFIG.station_url}${stationId}`, {
-      method: "GET",
-      headers: API_CONFIG.headers,
-    });
+    console.log(`Processing station ${station.id}`);
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch data for station ${stationId}: ${response.statusText}`
+    // Skip if station name contains "test"
+    if (station.name.toLowerCase().includes("test")) {
+      console.log('Skipping station as name contains "test"');
+      return;
+    }
+
+    // Get the first EVSE and port
+    const evse = station.evses?.[0];
+    if (!evse) {
+      console.log("No EVSE data available");
+      return;
+    }
+
+    const port = evse.ports?.[0];
+    if (!port) {
+      console.log("No port data available");
+      return;
+    }
+
+    // Get price information
+    const priceComponent = port.portPrice?.priceList?.[0]?.priceComponents?.[0];
+    const rawPrice = priceComponent?.price || 0;
+    const priceUnit = priceComponent?.priceUnit || "";
+
+    // Convert hourly price to per kWh price
+    // Assuming average charging session is 1 hour and average power is the port's max power
+    let price = rawPrice;
+    if (priceUnit === "Hourly" && port.power) {
+      // Convert hourly rate to per kWh rate: hourly_price / power_in_kw
+      price = rawPrice / port.power;
+      console.log(
+        `Converting hourly rate $${rawPrice}/hr with power ${
+          port.power
+        }kW to $${price.toFixed(3)}/kWh`
       );
     }
 
-    const data = await response.json();
-    const evses = data.data.evses;
-
-    for (const evse of evses) {
-      console.log(evse.evseId);
-      await processStation(client, evse.evseId);
-    }
-
-    return data;
-  } catch (error) {
-    console.error(`Error fetching data for station ${stationId}`, error);
-    throw error;
-  }
-}
-
-// Fetch station data
-async function fetchStationData(stationId) {
-  try {
-    const response = await fetch(`${API_CONFIG.evse_url}${stationId}`, {
-      method: "GET",
-      headers: API_CONFIG.headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch data for station ${stationId}: ${response.statusText}`
+    // Skip if price per kWh is too high (likely an error or premium station)
+    if (price > 0.25) {
+      console.log(
+        `Skipping station due to high price: $${price.toFixed(
+          3
+        )}/kWh (original: $${rawPrice}/${priceUnit})`
       );
+      return;
     }
 
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching data for station ${stationId}`, error);
-    throw error;
-  }
-}
-
-async function processStation(client, evseId) {
-  try {
-    console.log(`Processing station ${evseId}`);
-    const data = await fetchStationData(evseId);
-    await insertStationData(client, evseId, data);
-  } catch (error) {
-    console.error(`Error processing station ${evseId}:`, error);
-  }
-}
-
-async function insertStationData(client, stationId, data) {
-  try {
-    const ports = data.data.evses?.[0]?.ports || [];
-
-    const fields = [
-      data.data.name,
-      data.data.address,
-      data.data.city,
-      ports[0].maxElectricPower,
-      data.data.evses?.[0].multiPortChargingAllowed,
-      data.data.evses[0].ports[0].portPrice.priceList[0].priceComponents[0]
-        .price,
-      data.data.latitude,
-      data.data.longitude,
-    ];
-
-    // Check if "test" is found in any of the fields (case-insensitive)
-    const containsTest = fields.some(
-      (field) =>
-        typeof field === "string" && field.toLowerCase().includes("test")
-    );
-
-    if (containsTest) {
-      console.log('Skipping insert as "test" was found in one of the fields');
-      return; // Skip the insertion if "test" is found
-    }
-
-    const price =
-      data.data.evses[0].ports[0].portPrice.priceList[0].priceComponents[0]
-        .price;
-
-    if (price > 0.2) {
-      console.log(price);
-      return; // Skip the insertion if "test" is found
-    }
+    // Validate and clamp numeric values
+    const maxElectricPower = port.power;
+    const validPrice = price;
+    const validLat = parseFloat(station.latitude).toFixed(6);
+    const validLon = parseFloat(station.longitude).toFixed(6);
 
     const values = [
-      stationId,
-      data.data.name,
-      data.data.address,
-      data.data.city,
-      ports[0].maxElectricPower,
-      data.data.evses?.[0].multiPortChargingAllowed,
-      data.data.evses[0].ports[0].portPrice.priceList[0].priceComponents[0]
-        .price,
-      data.data.latitude,
-      data.data.longitude,
+      evse.evseId,
+      station.name,
+      station.address,
+      station.city,
+      maxElectricPower,
+      evse.multiPortChargingAllowed || false,
+      validPrice,
+      validLat,
+      validLon,
+      "kWh", // Always store as per_kwh after conversion
+      station.cpoId,
     ];
 
-    // console.log(values);
-    // Insert status into the database
-    await saveStationStatus(client, stationId, values);
+    console.log("Saving station with values:", {
+      id: evse.evseId,
+      power: maxElectricPower,
+      originalPrice: `$${rawPrice}/${priceUnit}`,
+      convertedPrice: `$${validPrice}/kWh`,
+      lat: validLat,
+      lon: validLon,
+    });
+
+    await saveStationStatus(client, evse.evseId, values);
   } catch (error) {
-    console.error(error);
+    console.error(`Error processing station ${station.id}:`, error);
   }
 }
 
@@ -189,11 +152,13 @@ async function saveStationStatus(client, stationId, values) {
       city, 
       max_electric_power, 
       multi_port_charging_allowed, 
-      price_per_kwh,
+      price,
       latitude,
-      longitude
+      longitude,
+      price_unit,
+      cpo_id
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     ON CONFLICT (station_id) 
     DO UPDATE SET
       name = EXCLUDED.name,
@@ -201,70 +166,53 @@ async function saveStationStatus(client, stationId, values) {
       city = EXCLUDED.city,
       max_electric_power = EXCLUDED.max_electric_power,
       multi_port_charging_allowed = EXCLUDED.multi_port_charging_allowed,
-      price_per_kwh = EXCLUDED.price_per_kwh,
+      price = EXCLUDED.price,
       latitude = EXCLUDED.latitude,
       longitude = EXCLUDED.longitude,
-      updated_at = CURRENT_TIMESTAMP
+      updated_at = CURRENT_TIMESTAMP,
+      price_unit = EXCLUDED.price_unit,
+      cpo_id = EXCLUDED.cpo_id
   `;
-  await client.query(query, values);
-}
 
-// Get stations from database
-async function getStationsFromDB(client) {
   try {
-    const query = "SELECT station_id FROM stations";
-    const result = await client.query(query);
-    return result.rows;
+    await client.query(query, values);
+    console.log(`Successfully saved/updated station ${stationId}`);
   } catch (error) {
-    console.error("Error fetching stations from database:", error);
+    console.error(`Error saving station ${stationId}:`, error);
     throw error;
   }
 }
 
-// Process stations from a list
-async function processStationList(client, stationList, source = "api") {
-  for (const station of stationList) {
-    const stationId = source === "api" ? station.id : station.station_id;
-    console.log(`Processing station ${stationId} from ${source}`);
-
-    if (source === "api") {
-      await fetchEVSEData(client, stationId);
-    } else {
-      await processStation(client, stationId);
-    }
-  }
-}
-
 // Main function to manage the database connection
-async function main(source = "api") {
+async function main() {
   const client = new Client(PG_CONFIG);
 
   try {
     await client.connect();
+    console.log("Connected to database");
 
-    if (source === "api") {
-      // Get stations from Shell API
-      const searchData = await fetchSearchData(client);
-      await processStationList(client, searchData.data, "api");
-    } else if (source === "db") {
-      // Get stations from database
-      const stations = await getStationsFromDB(client);
-      await processStationList(client, stations, "db");
-    } else {
-      throw new Error('Invalid source specified. Use "api" or "db"');
+    const searchData = await fetchSearchData();
+    const stations = searchData.data || [];
+
+    console.log(`Found ${stations.length} stations`);
+
+    for (const station of stations) {
+      await processStation(client, station);
     }
+
+    console.log("Finished processing all stations");
   } catch (error) {
     console.error("Error in main process:", error);
   } finally {
     await client.end();
+    console.log("Closed database connection");
   }
 }
 
-// Export the main function to be called with different sources
+// Export the main function
 module.exports = { main };
 
 // If running directly (not imported as a module)
 if (require.main === module) {
-  // Default to API source when run directly
-  main("db");
+  main().catch(console.error);
 }

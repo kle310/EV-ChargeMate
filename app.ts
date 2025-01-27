@@ -59,8 +59,8 @@ app.get("/", async (req, res) => {
   const selectedCity = (req.query.city as string) || "all";
 
   const groupedStations = {
-    free: stations.filter((station) => Number(station.price_per_kwh) === 0),
-    paid: stations.filter((station) => Number(station.price_per_kwh) > 0),
+    free: stations.filter((station) => Number(station.price) === 0),
+    paid: stations.filter((station) => Number(station.price) > 0),
   };
 
   res.send(generateHomeView(groupedStations, selectedCity));

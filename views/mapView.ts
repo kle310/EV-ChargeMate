@@ -1,5 +1,5 @@
 import { wrapInLayout } from "./layout";
-import { Station } from "../types";
+import { Station } from "../types/types";
 
 interface LocationGroup {
   latitude: number;
@@ -47,6 +47,10 @@ export const generateMapView = (stations: Station[]): string => {
     .station-price {
       font-weight: bold;
       color: #28a745;
+    }
+    .station-power {
+      color: #666;
+      margin: 4px 0;
     }
     .station-count {
       background: #28a745;
@@ -235,7 +239,8 @@ export const generateMapView = (stations: Station[]): string => {
                   '<div class="station-item">' +
                     '<h3>' + station.name + '</h3>' +
                     '<p>Station ID: <a href="/station/' + station.station_id + '">' + station.station_id + '</a></p>' +
-                    '<p class="station-price">Price: $' + station.price_per_kwh + '/kWh</p>' +
+                    '<p class="station-price">Price: $' + station.price + '/' + station.price_unit + '</p>' +
+                    '<p class="station-power">Power Output: ' + station.max_electric_power + 'kW</p>' +
                     '<p>' +
                       '<a href="https://www.google.com/maps/dir/?api=1&destination=' + station.latitude + ',' + station.longitude + '" ' +
                          'target="_blank" rel="noopener noreferrer">' +
