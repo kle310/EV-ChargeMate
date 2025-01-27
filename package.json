@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "build": "tsc",
-    "postbuild": "cp -r ./public ./dist/public",
+    "postbuild": "cp -r ./public ./dist/",
     "start": "npm run build && node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only app.ts",
     "test": "playwright test",
