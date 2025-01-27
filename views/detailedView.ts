@@ -1,18 +1,14 @@
 import { wrapInLayout } from "./layout";
 import { Station, StationStatus } from "../types/types";
 
-function getStatusText(status: string | undefined): string {
-  switch (status) {
-    case "Available":
-      return "Available";
-    case "Charging":
-      return "In Use";
-    case "Offline":
-      return "Offline";
+const getStatusText = (statusType: string): string => {
+  switch (statusType?.toUpperCase()) {
+    case "BUSY":
+      return "IN USE";
     default:
-      return "Unknown";
+      return statusType.toUpperCase();
   }
-}
+};
 
 export const generateDetailedView = (
   station: Station,
@@ -118,16 +114,26 @@ export const generateDetailedView = (
     .status-link.available:hover {
       background-color: #27ae60;
     }
-    .status-link.charging {
+    .status-link.busy {
       background-color: #e74c3c;
       color: white;
     }
-    .status-link.charging:hover {
+    .status-link.busy:hover {
       background-color: #c0392b;
     }
     .status-link.unknown {
       background-color: #95a5a6;
       color: white;
+    }
+    .status-link.unknown:hover {
+      background-color: #7f8c8d;
+    }
+    .status-link.loading {
+      background-color: #f1c40f;
+      color: white;
+    }
+    .status-link.loading:hover {
+      background-color: #f39c12;
     }
     .info-section {
       margin-bottom: 24px;
@@ -300,10 +306,12 @@ export const generateDetailedView = (
         <h1 class="station-name">${station.name}</h1>
         <div class="station-info">
           <div class="station-address">
-            <a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" 
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${
+              station.latitude
+            },${station.longitude}" 
                target="_blank" rel="noopener noreferrer" 
                title="Get directions to this charging station">
-              ${station.address}, ${station.city}
+              ${station.address.trim()}, ${station.city}
             </a>
           </div>
           <div class="tag-container">
@@ -315,31 +323,27 @@ export const generateDetailedView = (
             <span class="power-tag">${station.max_electric_power}kW</span>
             <span class="cpo-tag">${station.cpo_id}</span>
             <span class="realtime-tag ${
-              station.realtime_enabled ? "realtime-enabled" : "realtime-disabled"
+              station.realtime_enabled
+                ? "realtime-enabled"
+                : "realtime-disabled"
             }">
-              ${
-                station.realtime_enabled
-                  ? "Real-time"
-                  : "Non Real-time"
-              }
+              ${station.realtime_enabled ? "Real-time" : "Non Real-time"}
             </span>
           </div>
         </div>
         <a href="/station/${station.station_id}/live" class="status-link ${
-          availability &&
-          availability.length > 0 &&
-          availability[0]?.plug_status === "Available"
-            ? "available"
-            : availability &&
-              availability.length > 0 &&
-              availability[0]?.plug_status === "Charging"
-            ? "charging"
-            : "unknown"
-        }">
+    !availability || availability.length === 0
+      ? "loading"
+      : availability[0]?.plug_status === "AVAILABLE"
+      ? "available"
+      : availability[0]?.plug_status === "BUSY"
+      ? "busy"
+      : "unknown"
+  }">
           ${
-            availability && availability.length > 0
-              ? getStatusText(availability[0]?.plug_status)
-              : "Unknown"
+            !availability || availability.length === 0
+              ? "Loading..."
+              : getStatusText(availability[0]?.plug_status)
           }
         </a>
       </div>
@@ -472,9 +476,12 @@ export const generateDetailedView = (
             });
 
             chargingSessions.forEach((status) => {
-              const day = new Date(status.timestamp).toLocaleDateString("en-US", {
-                weekday: "long",
-              });
+              const day = new Date(status.timestamp).toLocaleDateString(
+                "en-US",
+                {
+                  weekday: "long",
+                }
+              );
               const isValidDay = (d: string): d is keyof typeof dayUsage => {
                 return d in dayUsage;
               };
@@ -497,7 +504,8 @@ export const generateDetailedView = (
 
             return Object.entries(dayUsage)
               .map(([day, minutes]) => {
-                const percentage = maxUsage > 0 ? (minutes / maxUsage) * 100 : 0;
+                const percentage =
+                  maxUsage > 0 ? (minutes / maxUsage) * 100 : 0;
                 const hours = (minutes / 60).toFixed(1);
                 return `
                   <div class="day-bar">
@@ -543,7 +551,7 @@ export const generateDetailedView = (
               // Generate table rows
               filteredRows.forEach((row) => {
                 const rowColor =
-                  row.plug_status?.trim() === "Available"
+                  row.plug_status?.trim().toUpperCase() === "AVAILABLE"
                     ? 'style="background-color: #2ecc71; color: white;"'
                     : "";
 
@@ -556,7 +564,7 @@ export const generateDetailedView = (
 
                 table += `
                   <tr ${rowColor}>
-                    <td>${row.plug_status || ""}</td>
+                    <td>${getStatusText(row.plug_status || "")}</td>
                     <td>${startTimeStr || ""}</td>
                     <td>${row.duration || ""}</td>
                   </tr>
