@@ -1,4 +1,4 @@
-import { wrapInLayout } from './layout';
+import { wrapInLayout } from "./layout";
 
 export const generateAboutView = (): string => {
   const aboutStyles = `
@@ -50,41 +50,75 @@ export const generateAboutView = (): string => {
     <div class="about-section">
       <h2>About EV ChargeMate</h2>
       <p>
-        Welcome to EV ChargeMate, your trusted companion in the electric vehicle charging journey. 
-        We're dedicated to making EV charging simple, accessible, and efficient for everyone.
+        Welcome to EV ChargeMate, a platform designed to help you find free and affordable charging 
+        for your electric vehicle. Our mission is to empower EV users by providing the tools and 
+        information needed to make sustainable transportation effortless and accessible.
       </p>
       <p>
-        Our platform provides real-time information about charging stations, helping you find the 
-        perfect spot to charge your electric vehicle when and where you need it.
+        Electric vehicles are more than just a mode of transport—they represent a shift toward 
+        cleaner energy and a brighter future for our planet. By simplifying the process of charging 
+        your EV, we aim to support the global transition from gas-powered vehicles to sustainable 
+        energy solutions.
+      </p>
+    </div>
+
+    <div class="about-section">
+      <h2>Why EV ChargeMate Exists</h2>
+      <p>
+        EV ChargeMate is more than a service; it's a personal project and a playground for innovation. 
+        Created to refine technical skills and explore the evolving world of EV charging, this platform 
+        is a space for growth and discovery. Along the way, we're striving to become experts in EV 
+        charging while making life easier for drivers like you.
       </p>
     </div>
 
     <div class="about-section">
       <h2>Key Features</h2>
       <ul class="feature-list">
-        <li>Real-time charging station availability</li>
-        <li>Detailed station information including pricing and power output</li>
-        <li>User-friendly interface for easy navigation</li>
-        <li>Usage statistics and predictions</li>
-        <li>Interactive map for station locations</li>
-        <li>Chatbot for questions and support</li>
+        <li>
+          Find Free or Cheap Charging: Locate charging stations that cost you next to nothing, including 
+          detailed pricing information and maps to help you navigate
+        </li>
+        <li>
+          Real-Time Availability: Stay informed about charger status and availability through our 
+          continuously updated database
+        </li>
+        <li>
+          Detailed Insights: Access key information, including charging times, station types, power output, 
+          and tips on how to make the most of your charging experience
+        </li>
+        <li>
+          Interactive Map: Easily locate the nearest chargers with an intuitive map interface that 
+          filters by price, availability, and more
+        </li>
+        <li>
+          Planning: Figure out the best times to charge based on your needs and predicted availability 
+          using our advanced algorithms and machine learning models
+        </li>
+        <li>
+          Chatbot: Ask anything about charging, from "What's the best charger for my car?" to 
+          "How do I find the cheapest charger near me?"
+        </li>
       </ul>
     </div>
 
     <div class="about-section">
-      <h2>Our Mission</h2>
+      <h2>Our Vision</h2>
       <p>
-        At EV ChargeMate, we believe in accelerating the transition to sustainable transportation. 
-        Our mission is to eliminate range anxiety and make electric vehicle charging as convenient 
-        as possible, contributing to a cleaner and more sustainable future.
+        We envision a world where sustainable energy is the standard, not the exception. By simplifying 
+        EV charging, we're contributing to a future where clean energy drives progress. Together, we can 
+        create a greener planet—one charge at a time.
       </p>
+    </div>
+
+    <div class="about-section">
+      <h2>Let's Connect</h2>
+      <p>Have feedback or ideas? I'd love to hear from you!</p>
       <div class="contact-info">
-        <h2>Contact Us</h2>
-        <p>Have questions or suggestions? We'd love to hear from you!</p>
         <p>Email: khacle@gmail.com</p>
       </div>
     </div>
   `;
 
-  return wrapInLayout(content, 'About', 'about', aboutStyles);
+  return wrapInLayout(content, "About", "about", aboutStyles);
 };
