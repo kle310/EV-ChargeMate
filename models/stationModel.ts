@@ -167,26 +167,20 @@ export class StationModel extends BaseModel {
 
   async fetchStationStatusByCity(city: string): Promise<StationStatus[]> {
     const query = `
-      WITH latest_status AS (
-        SELECT 
-          s.station_id,
-          ss.plug_type,
-          ss.plug_status,
-          ss.timestamp,
-          ROW_NUMBER() OVER (PARTITION BY s.station_id ORDER BY ss.timestamp DESC) as rn
-        FROM station_status ss
-        INNER JOIN stations s ON s.station_id = ss.station_id
-        WHERE LOWER(s.city) = LOWER($1)
-      )
-      SELECT 
-        station_id,
-        plug_type,
-        plug_status,
-        timestamp
-      FROM latest_status
-      WHERE rn = 1
-      ORDER BY timestamp DESC;
-    `;
+    SELECT 
+      DISTINCT ON (s.station_id) s.station_id,
+      ss.plug_type,
+      ss.plug_status,
+      ss.timestamp
+    FROM station_status ss
+    INNER JOIN stations s ON s.station_id = ss.station_id
+    WHERE 
+      CASE 
+        WHEN LOWER($1) = 'all' THEN LOWER(ss.plug_status) = 'available'
+        ELSE LOWER(s.city) = LOWER($1)
+      END
+    ORDER BY s.station_id, ss.timestamp DESC;
+  `;
 
     try {
       const { rows }: QueryResult<StationStatus> = await this.pool.query(
@@ -195,9 +189,8 @@ export class StationModel extends BaseModel {
       );
       return rows;
     } catch (error) {
-      throw new Error(
-        `Failed to fetch station status for city ${city}: ${error}`
-      );
+      console.error("Error fetching station status by city:", error);
+      throw error;
     }
   }
 }
