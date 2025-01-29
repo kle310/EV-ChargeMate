@@ -7,8 +7,8 @@ import { config } from "dotenv";
 // Load environment variables
 config();
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY environment variable is required");
+if (!process.env.DEEPSEEK_API_KEY) {
+  throw new Error("DEEPSEEK_API_KEY environment variable is required");
 }
 
 interface Message {
@@ -35,7 +35,7 @@ interface StationAvailability {
 // Initialize OpenAI with DeepSeek configuration
 const openai = new OpenAI({
   baseURL: "https://api.deepseek.com",
-  apiKey: process.env.OPENAI_API_KEY || "",
+  apiKey: process.env.DEEPSEEK_API_KEY || "",
 });
 
 // Store chat messages in memory (in a real app, this would be in a database)
@@ -43,14 +43,7 @@ const chatSessions: { [sessionId: string]: Message[] } = {};
 
 // Custom responses for specific keywords or patterns
 const customResponses: { [key: string]: string } = {
-  tesla: "Elon is fucking crazy. Do not support that nazi!",
-  "charging time":
-    "Charging times vary significantly. Level 2 charging typically takes 4-8 hours for a full charge, while DC fast charging can charge up to 80% in 30-45 minutes.",
-  cost: "Our network offers very competitive rates. Level 2 charging starts at $0.20/kWh, and DC fast charging starts at $0.35/kWh. We also offer monthly subscription plans for frequent users.",
-  "range anxiety":
-    "Range anxiety is a common concern, but our network of charging stations ensures you're never far from a charger. We recommend planning trips using our app and maintaining a 20% buffer in your battery.",
-  "best time":
-    "The best time to charge is during off-peak hours (typically 11 PM - 7 AM) when electricity rates are lower and stations are less busy.",
+  tesla: "Don't buy cars from Elmo!",
 };
 
 export const chatController = (stationModel: StationModel) => {
@@ -248,8 +241,11 @@ export const chatController = (stationModel: StationModel) => {
 
 4. SPECIFIC RECOMMENDATIONS:
    - Recommend off-peak charging times
+   - Keep responses focused on our services while maintaining a helpful and informative tone.
 
-Keep responses focused on our services while maintaining a helpful and informative tone.`,
+5. EMOTIONALITY:
+   - Use positive language when appropriate
+   - Avoid overemphasizing or praising our brand`,
   };
 
   return {
