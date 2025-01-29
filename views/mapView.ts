@@ -186,13 +186,11 @@ export const generateMapView = (stations: Station[]): string => {
     <div id="map"></div>
     <div class="map-controls">
       <div id="stationCount"></div>
-      <div id="loadingIndicator" class="loading-indicator hidden">Updating stations...</div>
     </div>
 
     <script>
       let markers = [];
       let clusterGroup;
-      let stationStatuses = {};
       let userMarker = null;
       const locationGroups = ${locationGroupsJson};
 
@@ -226,42 +224,13 @@ export const generateMapView = (stations: Station[]): string => {
         return (R * c).toFixed(1);
       }
 
-      // Create custom icon based on station count and status
-      function createCustomIcon(count, status = 'unknown') {
-        const statusColors = {
-          'available': '#28a745',
-          'unavailable': '#dc3545',
-          'unknown': '#2196F3'
-        };
-        
+      // Create custom icon for available stations
+      function createCustomIcon(count) {
         return L.divIcon({
-          html: \`<div class="station-count" style="background-color: \${statusColors[status]}">\${count}</div>\`,
+          html: \`<div class="station-count" style="background-color: #28a745">\${count}</div>\`,
           className: 'custom-marker',
           iconSize: [24, 24]
         });
-      }
-
-      // Fetch station statuses with error handling and loading state
-      async function fetchStationStatuses() {
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        loadingIndicator.classList.remove('hidden');
-        
-        try {
-          const response = await fetch('/api/status?city=all');
-          if (!response.ok) {
-            throw new Error(\`HTTP error! status: \${response.status}\`);
-          }
-          const result = await response.json();
-          const data = result.data || [];
-          stationStatuses = {};
-          data.forEach(status => {
-            stationStatuses[status.station_id] = status;
-          });
-        } catch (error) {
-          showError('Failed to update station statuses. Please try again later.');
-        } finally {
-          loadingIndicator.classList.add('hidden');
-        }
       }
 
       // Show error message
@@ -279,19 +248,15 @@ export const generateMapView = (stations: Station[]): string => {
         clusterGroup.clearLayers();
 
         let totalStations = 0;
-        let totalAvailableStations = 0;
 
         stations.forEach(group => {
-          const availableCount = group.stations.filter(station => 
-            stationStatuses[station.station_id]?.plug_status.toLowerCase() === 'available'
-          ).length;
+          if (group.stations.length === 0) return;
           
           totalStations += group.stations.length;
-          totalAvailableStations += availableCount;
 
           const marker = L.marker(
             [group.latitude, group.longitude],
-            { icon: createCustomIcon(group.stations.length, 'available') }
+            { icon: createCustomIcon(group.stations.length) }
           )
             .bindPopup(() => {
               const popupContent = document.createElement('div');
@@ -300,13 +265,8 @@ export const generateMapView = (stations: Station[]): string => {
               const stationList = document.createElement('ul');
               stationList.className = 'station-list';
               
-              // Sort stations by availability and distance if user location exists
+              // Sort stations by distance if user location exists
               const sortedStations = [...group.stations].sort((a, b) => {
-                const statusA = stationStatuses[a.station_id]?.plug_status.toLowerCase() === 'available' ? 0 : 1;
-                const statusB = stationStatuses[b.station_id]?.plug_status.toLowerCase() === 'available' ? 0 : 1;
-                
-                if (statusA !== statusB) return statusA - statusB;
-                
                 if (userMarker) {
                   const userPos = userMarker.getLatLng();
                   const distA = calculateDistance(userPos.lat, userPos.lng, a.latitude, a.longitude);
@@ -317,8 +277,6 @@ export const generateMapView = (stations: Station[]): string => {
               });
 
               sortedStations.forEach(station => {
-                const status = stationStatuses[station.station_id] || { plug_status: 'Unknown' };
-
                 let distance = '';
                 if (userMarker) {
                   const userPos = userMarker.getLatLng();
@@ -345,35 +303,11 @@ export const generateMapView = (stations: Station[]): string => {
           clusterGroup.addLayer(marker);
         });
 
-        // Update station count using the actual totals
+        // Update station count
         const countElement = document.getElementById('stationCount');
-        countElement.textContent = \`\${totalStations}/\${locationGroups.reduce((sum, group) => sum + group.stations.length, 0)} Available\`;
+        countElement.textContent = \`\${totalStations} Available\`;
 
         return markers;
-      }
-
-      // Initialize map with only available stations
-      async function initializeMap() {
-        try {
-          const response = await fetch('/api/status?city=all');
-          const result = await response.json();
-          const availableStations = result.data || [];
-          
-          // Group available stations
-          const availableGroups = locationGroups.map(group => ({
-            ...group,
-            stations: group.stations.filter(station => {
-              const status = availableStations.find(s => s.station_id === station.station_id);
-              return status && status.plug_status.toLowerCase() === 'available';
-            })
-          })).filter(group => group.stations.length > 0);
-
-          // Create markers for available stations
-          createMarkers(availableGroups);
-          map.fitBounds(clusterGroup.getBounds(), { padding: [50, 50] });
-        } catch (error) {
-          showError('Failed to load available stations. Please try again later.');
-        }
       }
 
       // Create custom location control
@@ -412,7 +346,7 @@ export const generateMapView = (stations: Station[]): string => {
                     container.classList.add('active');
                     setTimeout(() => container.classList.remove('active'), 2000);
                   },
-                  (error) => console.error('Error getting location:', error),
+                  (error) => showError('Error getting location. Please try again.'),
                   { enableHighAccuracy: true }
                 );
               }
@@ -442,16 +376,16 @@ export const generateMapView = (stations: Station[]): string => {
               userMarker.setLatLng([latitude, longitude]);
             }
           },
-          (error) => console.error('Error watching location:', error),
+          (error) => showError('Error watching location. Please try again.'),
           { enableHighAccuracy: true }
         );
       }
 
       // Initialize map with available stations
-      initializeMap();
-
-      // Refresh station statuses periodically
-      setInterval(fetchStationStatuses, 60000); // Refresh every minute
+      createMarkers();
+      if (markers.length > 0) {
+        map.fitBounds(clusterGroup.getBounds(), { padding: [50, 50] });
+      }
     </script>
   `;
 
