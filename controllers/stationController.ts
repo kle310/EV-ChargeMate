@@ -54,8 +54,14 @@ export class StationController {
   );
 
   // Non-API method for internal use (like views)
-  async fetchStationsForMap(): Promise<Station[]> {
-    return this.stationModel.getStations();
+  async fetchStationsForMap(region?: string): Promise<Station[]> {
+    try {
+      const stations = await this.stationModel.getStations(region);
+      return stations;
+    } catch (error) {
+      console.error("Error fetching stations for map:", error);
+      throw error;
+    }
   }
 
   async getAllStations(): Promise<Station[]> {
