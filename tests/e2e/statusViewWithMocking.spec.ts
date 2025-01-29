@@ -60,7 +60,7 @@ test("can show unknown status", async ({ page }: { page: Page }) => {
 });
 
 test("can show in use status", async ({ page }: { page: Page }) => {
-  await testStatus(page, "Charging", 30, "30", "rgb(254, 232, 231)");
+  await testStatus(page, "Charging", 30, "30", "rgb(245, 245, 245)");
 });
 
 test("can show available status", async ({ page }: { page: Page }) => {
