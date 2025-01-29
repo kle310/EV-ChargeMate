@@ -156,6 +156,17 @@ export const generateChatbotView = (messages: Message[] = []): string => {
     }
   `;
 
+  const initialMessage = `Welcome to EV ChargeMate! 👋
+
+  EV ChargeMate empowers EV users by making sustainable transportation effortless and accessible—helping them find free and affordable charging while driving the adoption of clean energy as the standard.
+
+  How can I help you today? Feel free to ask about:
+  - Finding nearby charging stations
+  - Understanding charging costs
+  - Getting real-time availability
+  - Planning your charging schedule
+  - Or anything else EV charging related!`;
+
   const content = `
     <div class="chat-container">
       <div class="messages-container" id="messages-container">
@@ -163,17 +174,17 @@ export const generateChatbotView = (messages: Message[] = []): string => {
           messages.length === 0
             ? `
           <div class="message assistant">
-            <div class="avatar">A</div>
-            <div class="message-content">
-              Hello! I'm your EV charging assistant. How can I help you today?
-            </div>
+            <div class="avatar">AI</div>
+            <div class="message-content">${initialMessage}</div>
           </div>
         `
             : messages
                 .map(
                   (message) => `
           <div class="message ${message.role}">
-            <div class="avatar">${message.role === "user" ? "U" : "A"}</div>
+            <div class="avatar">${
+              message.role === "assistant" ? "AI" : "You"
+            }</div>
             <div class="message-content">${message.content}</div>
           </div>
         `
@@ -181,128 +192,121 @@ export const generateChatbotView = (messages: Message[] = []): string => {
                 .join("")
         }
       </div>
-      <form class="input-container" id="chat-form">
-        <textarea 
-          class="message-input" 
-          placeholder="Type your message here..." 
-          rows="1" 
+      <div class="input-container">
+        <textarea
           id="message-input"
+          class="message-input"
+          placeholder="Type your message..."
+          rows="1"
+          onkeydown="handleKeyDown(event)"
         ></textarea>
-        <button type="submit" class="send-button" id="send-button" disabled>
+        <button onclick="submitMessage()" class="send-button">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
           </svg>
         </button>
-      </form>
+      </div>
     </div>
+
     <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const form = document.getElementById('chat-form');
-        const input = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-        const messagesContainer = document.querySelector('.messages-container');
+      const messagesContainer = document.getElementById('messages-container');
+      const messageInput = document.getElementById('message-input');
+      let isSubmitting = false;
 
-        // Auto-resize textarea
-        input.addEventListener('input', () => {
-          input.style.height = 'auto';
-          input.style.height = (input.scrollHeight) + 'px';
-          sendButton.disabled = input.value.trim() === '';
-        });
-
-        // Create thinking indicator
-        const createThinkingIndicator = () => {
-          const thinking = document.createElement('div');
-          thinking.className = 'message assistant thinking';
-          thinking.innerHTML = \`
-            <div class="avatar">A</div>
-            <div class="dots">
-              <div class="dot"></div>
-              <div class="dot"></div>
-              <div class="dot"></div>
-            </div>
-          \`;
-          return thinking;
-        };
-
-        // Add new message to the chat
-        const addMessage = (content, role) => {
-          const messageDiv = document.createElement('div');
-          messageDiv.className = \`message \${role}\`;
-          messageDiv.innerHTML = \`
-            <div class="avatar">\${role === 'user' ? 'U' : 'A'}</div>
-            <div class="message-content">\${content}</div>
-          \`;
-          messagesContainer.appendChild(messageDiv);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        };
-
-        // Handle form submission
-        const handleSubmit = async () => {
-          const message = input.value.trim();
-          if (!message) return;
-
-          // Add user message
-          addMessage(message, "user");
-
-          // Clear input
-          input.value = "";
-          input.style.height = "auto";
-          sendButton.disabled = true;
-
-          // Add thinking indicator
-          const thinking = createThinkingIndicator();
-          messagesContainer.appendChild(thinking);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-          // Send message to server
-          try {
-            const response = await fetch("/api/chat", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ message }),
-            });
-
-            if (!response.ok) throw new Error("Failed to send message");
-
-            const data = await response.json();
-            
-            // Remove thinking indicator
-            thinking.remove();
-
-            if (data.success && data.messages) {
-              // Add the latest assistant message
-              const lastMessage = data.messages[data.messages.length - 1];
-              if (lastMessage.role === "assistant") {
-                addMessage(lastMessage.content, "assistant");
-              }
-            }
-          } catch (error) {
-            console.error("Error sending message:", error);
-            thinking.remove();
-            addMessage("I apologize, but I encountered an error. Please try again.", "assistant");
-          }
-        };
-
-        // Handle Command+Enter or Ctrl+Enter
-        input.addEventListener("keydown", (e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-            e.preventDefault();
-            if (!input.value.trim()) return;
-            handleSubmit();
-          }
-        });
-
-        // Handle form submission
-        form.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          handleSubmit();
-        });
-
-        // Initial scroll to bottom
+      // Auto-scroll to bottom when new messages are added
+      function scrollToBottom() {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      // Handle keydown events
+      function handleKeyDown(event) {
+        if (event.key === 'Enter') {
+          if (event.shiftKey) {
+            // Allow shift+enter for new line
+            return;
+          }
+          event.preventDefault();
+          submitMessage();
+        }
+      }
+
+      // Auto-resize textarea as user types
+      messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
       });
+
+      // Submit the message
+      async function submitMessage() {
+        const content = messageInput.value.trim();
+        if (!content || isSubmitting) return;
+
+        isSubmitting = true;
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+
+        // Add user message
+        addMessage('user', content);
+
+        // Show thinking indicator
+        const thinking = document.createElement('div');
+        thinking.className = 'message assistant thinking';
+        thinking.innerHTML = \`
+          <div class="avatar">AI</div>
+          <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        \`;
+        messagesContainer.appendChild(thinking);
+        scrollToBottom();
+
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: content })
+          });
+
+          if (!response.ok) throw new Error('Failed to get response');
+          
+          const data = await response.json();
+          thinking.remove();
+
+          if (data.success && data.messages) {
+            // Add the latest assistant message
+            const lastMessage = data.messages[data.messages.length - 1];
+            if (lastMessage.role === "assistant") {
+              addMessage('assistant', lastMessage.content);
+            }
+          } else if (data.message) {
+            addMessage('assistant', data.message);
+          } else {
+            throw new Error('Invalid response format');
+          }
+        } catch (error) {
+          thinking.remove();
+          addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+        } finally {
+          isSubmitting = false;
+        }
+      }
+
+      // Add a message to the chat
+      function addMessage(role, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = \`message \${role}\`;
+        messageDiv.innerHTML = \`
+          <div class="avatar">\${role === 'assistant' ? 'AI' : 'You'}</div>
+          <div class="message-content">\${content}</div>
+        \`;
+        messagesContainer.appendChild(messageDiv);
+        scrollToBottom();
+      }
+
+      // Initial scroll to bottom
+      scrollToBottom();
     </script>
   `;
 
