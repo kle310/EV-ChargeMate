@@ -132,6 +132,30 @@ export const generateMapView = (stations: Station[]): string => {
       font-size: 12px;
       font-weight: bold;
     }
+    .loading-indicator {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: white;
+      padding: 10px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .loading-indicator.hidden {
+      display: none;
+    }
+    .error-message {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: #f8d7da;
+      color: #721c24;
+      padding: 10px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
   `;
 
   const locationGroups = stations.reduce(
@@ -150,29 +174,24 @@ export const generateMapView = (stations: Station[]): string => {
     {}
   );
 
-  console.log("Input stations:", stations);
-  console.log("Location groups:", locationGroups);
   const locationGroupsJson = JSON.stringify(Object.values(locationGroups));
 
   const content = `
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     
     <div id="map"></div>
     <div class="map-controls">
-      <div class="filter-switch">
-        <label class="switch">
-          <input type="checkbox" id="availableOnly">
-          <span class="slider"></span>
-        </label>
-        <span>Show Available Only</span>
-      </div>
       <div id="stationCount"></div>
+      <div id="loadingIndicator" class="loading-indicator hidden">Updating stations...</div>
     </div>
 
     <script>
       let markers = [];
-      let markerGroup;
+      let clusterGroup;
       let stationStatuses = {};
       let userMarker = null;
       const locationGroups = ${locationGroupsJson};
@@ -186,41 +205,93 @@ export const generateMapView = (stations: Station[]): string => {
         attribution: 'OpenStreetMap contributors'
       }).addTo(map);
 
-      // Create custom icon based on station count
-      function createCustomIcon(count) {
+      // Initialize cluster group
+      clusterGroup = L.markerClusterGroup({
+        chunkedLoading: true,
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true
+      }).addTo(map);
+
+      // Calculate distance between two points
+      function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                 Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                 Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return (R * c).toFixed(1);
+      }
+
+      // Create custom icon based on station count and status
+      function createCustomIcon(count, status = 'unknown') {
+        const statusColors = {
+          'available': '#28a745',
+          'unavailable': '#dc3545',
+          'unknown': '#2196F3'
+        };
+        
         return L.divIcon({
-          html: '<div class="station-count">' + count + '</div>',
+          html: \`<div class="station-count" style="background-color: \${statusColors[status]}">\${count}</div>\`,
           className: 'custom-marker',
           iconSize: [24, 24]
         });
       }
 
-      // Fetch station statuses
+      // Fetch station statuses with error handling and loading state
       async function fetchStationStatuses() {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        loadingIndicator.classList.remove('hidden');
+        
         try {
           const response = await fetch('/api/status?city=all');
+          if (!response.ok) {
+            throw new Error(\`HTTP error! status: \${response.status}\`);
+          }
           const result = await response.json();
           const data = result.data || [];
-          console.log('Fetched statuses:', data);
           stationStatuses = {};
           data.forEach(status => {
             stationStatuses[status.station_id] = status;
           });
-          updateMarkers();
         } catch (error) {
-          console.error('Error fetching station statuses:', error);
+          showError('Failed to update station statuses. Please try again later.');
+        } finally {
+          loadingIndicator.classList.add('hidden');
         }
+      }
+
+      // Show error message
+      function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+        setTimeout(() => errorDiv.remove(), 5000);
       }
 
       // Create markers for location groups
       function createMarkers(stations = locationGroups) {
-        console.log('Creating markers for stations:', stations);
         markers = [];
+        clusterGroup.clearLayers();
+
+        let totalStations = 0;
+        let totalAvailableStations = 0;
 
         stations.forEach(group => {
+          const availableCount = group.stations.filter(station => 
+            stationStatuses[station.station_id]?.plug_status.toLowerCase() === 'available'
+          ).length;
+          
+          totalStations += group.stations.length;
+          totalAvailableStations += availableCount;
+
           const marker = L.marker(
             [group.latitude, group.longitude],
-            { icon: createCustomIcon(group.stations.length) }
+            { icon: createCustomIcon(group.stations.length, 'available') }
           )
             .bindPopup(() => {
               const popupContent = document.createElement('div');
@@ -229,24 +300,39 @@ export const generateMapView = (stations: Station[]): string => {
               const stationList = document.createElement('ul');
               stationList.className = 'station-list';
               
-              group.stations.forEach(station => {
+              // Sort stations by availability and distance if user location exists
+              const sortedStations = [...group.stations].sort((a, b) => {
+                const statusA = stationStatuses[a.station_id]?.plug_status.toLowerCase() === 'available' ? 0 : 1;
+                const statusB = stationStatuses[b.station_id]?.plug_status.toLowerCase() === 'available' ? 0 : 1;
+                
+                if (statusA !== statusB) return statusA - statusB;
+                
+                if (userMarker) {
+                  const userPos = userMarker.getLatLng();
+                  const distA = calculateDistance(userPos.lat, userPos.lng, a.latitude, a.longitude);
+                  const distB = calculateDistance(userPos.lat, userPos.lng, b.latitude, b.longitude);
+                  return distA - distB;
+                }
+                return 0;
+              });
+
+              sortedStations.forEach(station => {
                 const status = stationStatuses[station.station_id] || { plug_status: 'Unknown' };
-                const statusClass = status.plug_status === 'Available' 
-                  ? 'status-available'
-                  : status.plug_status === 'Unknown' 
-                    ? 'status-unknown' 
-                    : 'status-unavailable';
+
+                let distance = '';
+                if (userMarker) {
+                  const userPos = userMarker.getLatLng();
+                  distance = calculateDistance(userPos.lat, userPos.lng, station.latitude, station.longitude);
+                }
 
                 const stationItem = document.createElement('li');
                 stationItem.className = 'station-item';
                 stationItem.innerHTML = \`
-                  <h3>\${station.name}</h3>
-                  <p>\${station.address}, \${station.city}</p>
+                  <h3><a href="/station/\${station.station_id}">\${station.name}</a></h3>
+                  <p><a href="https://maps.google.com/?q=\${encodeURIComponent(station.address + ', ' + station.city)}" target="_blank">\${station.address}, \${station.city}</a></p>
                   <p class="station-power">\${station.max_electric_power}kW</p>
                   <p class="station-price">$\${station.price}/\${station.price_unit}</p>
-                  <div class="status-indicator \${statusClass}">
-                    \${status.plug_status}
-                  </div>
+                  \${distance ? \`<p class="station-distance">\${distance}km away</p>\` : ''}
                 \`;
                 stationList.appendChild(stationItem);
               });
@@ -256,56 +342,37 @@ export const generateMapView = (stations: Station[]): string => {
             });
             
           markers.push(marker);
+          clusterGroup.addLayer(marker);
         });
 
-        // Update station count
+        // Update station count using the actual totals
         const countElement = document.getElementById('stationCount');
-        const totalStations = markers.reduce((sum, marker) => {
-          return sum + parseInt(marker.getIcon().options.html.match(/\\d+/)[0]);
-        }, 0);
-        countElement.textContent = \`Showing \${totalStations} stations\`;
+        countElement.textContent = \`\${totalStations}/\${locationGroups.reduce((sum, group) => sum + group.stations.length, 0)} Available\`;
 
         return markers;
       }
 
-      // Update markers based on filter
-      async function updateMarkers() {
-        const showAvailableOnly = document.getElementById('availableOnly').checked;
-        
-        // Remove existing marker group if it exists
-        if (markerGroup) {
-          map.removeLayer(markerGroup);
-        }
+      // Initialize map with only available stations
+      async function initializeMap() {
+        try {
+          const response = await fetch('/api/status?city=all');
+          const result = await response.json();
+          const availableStations = result.data || [];
+          
+          // Group available stations
+          const availableGroups = locationGroups.map(group => ({
+            ...group,
+            stations: group.stations.filter(station => {
+              const status = availableStations.find(s => s.station_id === station.station_id);
+              return status && status.plug_status.toLowerCase() === 'available';
+            })
+          })).filter(group => group.stations.length > 0);
 
-        if (showAvailableOnly) {
-          try {
-            const response = await fetch('/api/status?city=all');
-            const result = await response.json();
-            const availableStations = result.data || [];
-            
-            // Group available stations
-            const availableGroups = locationGroups.map(group => ({
-              ...group,
-              stations: group.stations.filter(station => {
-                const status = availableStations.find(s => s.station_id === station.station_id);
-                return status && status.plug_status.toLowerCase() === 'available';
-              })
-            })).filter(group => group.stations.length > 0);
-
-            // Create markers for available stations
-            const newMarkers = createMarkers(availableGroups);
-            if (newMarkers.length > 0) {
-              markerGroup = L.featureGroup(newMarkers).addTo(map);
-              map.fitBounds(markerGroup.getBounds(), { padding: [50, 50] });
-            }
-          } catch (error) {
-            console.error('Error fetching available stations:', error);
-          }
-        } else {
-          // Show all stations
-          const newMarkers = createMarkers();
-          markerGroup = L.featureGroup(newMarkers).addTo(map);
-          map.fitBounds(markerGroup.getBounds(), { padding: [50, 50] });
+          // Create markers for available stations
+          createMarkers(availableGroups);
+          map.fitBounds(clusterGroup.getBounds(), { padding: [50, 50] });
+        } catch (error) {
+          showError('Failed to load available stations. Please try again later.');
         }
       }
 
@@ -380,13 +447,8 @@ export const generateMapView = (stations: Station[]): string => {
         );
       }
 
-      // Initialize map with all stations
-      const initialMarkers = createMarkers();
-      markerGroup = L.featureGroup(initialMarkers).addTo(map);
-      map.fitBounds(markerGroup.getBounds(), { padding: [50, 50] });
-
-      // Add event listener for filter toggle
-      document.getElementById('availableOnly').addEventListener('change', updateMarkers);
+      // Initialize map with available stations
+      initializeMap();
 
       // Refresh station statuses periodically
       setInterval(fetchStationStatuses, 60000); // Refresh every minute
