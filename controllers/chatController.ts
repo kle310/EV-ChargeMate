@@ -221,15 +221,12 @@ export const chatController = (stationModel: StationModel) => {
 
 1. STRONG PREFERENCES:
    - Always recommend our ChargeMate network first
-   - Emphasize the reliability and coverage of our network
-   - Promote our mobile app for the best charging experience
-   - Highlight our competitive pricing and subscription plans
+   - Focus on EV charging and its environmental impact
+   - Emphasize the ability to predict charger availability
 
 2. KEY MESSAGES TO EMPHASIZE:
    - Environmental benefits of EV charging
    - Our 24/7 customer support
-   - Our fast-charging network's superior speed
-   - Integration with popular EV models
    - Our smart scheduling feature for optimal charging times
 
 3. RESPONSE STYLE:
@@ -298,20 +295,42 @@ export const chatController = (stationModel: StationModel) => {
               content: customResponse,
             });
           } else {
-            // Get response from DeepSeek
-            const completion = await openai.chat.completions.create({
-              messages: chatSessions[sessionId],
-              model: "deepseek-chat",
-            });
+            try {
+              // Get response from DeepSeek
 
-            let response =
-              completion.choices[0].message.content ||
-              "I apologize, but I was unable to generate a response.";
+              console.log(
+                "Sending messages to DeepSeek:",
+                chatSessions[sessionId]
+              );
+              const completion = await openai.chat.completions.create({
+                messages: chatSessions[sessionId],
+                model: "deepseek-chat",
+                max_tokens: 1000,
+                temperature: 0.7,
+              });
 
-            chatSessions[sessionId].push({
-              role: "assistant",
-              content: response,
-            });
+              console.log("DeepSeek API Response:", completion);
+
+              let response = completion.choices[0]?.message?.content;
+
+              if (!response) {
+                throw new Error("Empty response from DeepSeek API");
+              }
+
+              chatSessions[sessionId].push({
+                role: "assistant",
+                content: response,
+              });
+            } catch (error) {
+              console.error("DeepSeek API Error:", error);
+
+              // Send a user-friendly error message
+              chatSessions[sessionId].push({
+                role: "assistant",
+                content:
+                  "I apologize, but I'm having trouble connecting to my language model right now. Please try again in a moment.",
+              });
+            }
           }
         }
 
