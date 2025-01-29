@@ -133,16 +133,49 @@ export class StationModel extends BaseModel {
     }
   }
 
-  async getStations(): Promise<Station[]> {
+  async getStations(): Promise<(Station & { status_timestamp?: Date })[]> {
     const query = `
-      SELECT *
-      FROM stations 
-      WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+      SELECT 
+        s.*,
+        ls.plug_status AS status,
+        ls.timestamp AS status_timestamp
+      FROM stations s
+      INNER JOIN LATERAL (
+        SELECT plug_status, timestamp
+        FROM station_status ss
+        WHERE ss.station_id = s.station_id
+        ORDER BY ss.timestamp DESC
+        LIMIT 1
+      ) ls ON true
+      WHERE 
+        s.latitude IS NOT NULL 
+        AND s.longitude IS NOT NULL 
+        AND LOWER(ls.plug_status) = 'available'
+      ORDER BY s.station_id;
     `;
 
     try {
       const { rows } = await this.pool.query(query);
-      return rows;
+      return rows.map((row) => ({
+        station_id: row.station_id,
+        name: row.name,
+        address: row.address,
+        city: row.city,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        max_electric_power: row.max_electric_power,
+        price: row.price,
+        price_unit: row.price_unit,
+        status: row.status,
+        status_timestamp: row.status_timestamp,
+        multi_port_charging_allowed: row.multi_port_charging_allowed,
+        availability_status: row.availability_status,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        cpo_id: row.cpo_id,
+        realtime_enabled: row.realtime_enabled,
+        region: row.region,
+      }));
     } catch (error) {
       console.error("Error fetching stations:", error);
       throw error;
@@ -168,17 +201,17 @@ export class StationModel extends BaseModel {
   async fetchStationStatusByCity(city: string): Promise<StationStatus[]> {
     const query = `
     SELECT 
-      DISTINCT ON (s.station_id) s.station_id,
+      DISTINCT ON (s.station_id) 
+      s.station_id,
       ss.plug_type,
       ss.plug_status,
       ss.timestamp
     FROM station_status ss
     INNER JOIN stations s ON s.station_id = ss.station_id
     WHERE 
-      CASE 
-        WHEN LOWER($1) = 'all' THEN LOWER(ss.plug_status) = 'available'
-        ELSE LOWER(s.city) = LOWER($1)
-      END
+      (LOWER($1) = 'all' AND LOWER(ss.plug_status) = 'available')
+      OR 
+      (LOWER($1) != 'all' AND LOWER(s.city) = LOWER($1))
     ORDER BY s.station_id, ss.timestamp DESC;
   `;
 

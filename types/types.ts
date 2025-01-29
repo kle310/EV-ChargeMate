@@ -22,6 +22,7 @@ export interface Station {
   updated_at: Date;
   cpo_id: string;
   realtime_enabled: boolean;
+  region: string;
   status?: string;
 }
 
