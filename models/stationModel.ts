@@ -133,7 +133,12 @@ export class StationModel extends BaseModel {
     }
   }
 
-  async getStations(): Promise<(Station & { status_timestamp?: Date })[]> {
+  async getStations(
+    region?: string
+  ): Promise<(Station & { status_timestamp?: Date })[]> {
+    // Convert region to uppercase to match database values
+    const dbRegion = region?.toUpperCase();
+
     const query = `
       SELECT 
         s.*,
@@ -149,32 +154,28 @@ export class StationModel extends BaseModel {
       ) ls ON true
       WHERE 
         s.latitude IS NOT NULL 
-        AND s.longitude IS NOT NULL 
-        AND LOWER(ls.plug_status) = 'available'
-      ORDER BY s.station_id;
+        AND s.longitude IS NOT NULL
+        ${dbRegion ? `AND s.region = $1` : ""}
+      ORDER BY s.price ASC;
     `;
 
     try {
-      const { rows } = await this.pool.query(query);
+      console.log("Fetching stations with region:", dbRegion); // Debug log
+      const { rows } = await this.pool.query(query, dbRegion ? [dbRegion] : []);
+      console.log(`Found ${rows.length} stations for region ${dbRegion}`); // Debug log
+
+      // Log a sample station to verify data
+      if (rows.length > 0) {
+        console.log("Sample station:", {
+          id: rows[0].station_id,
+          name: rows[0].name,
+          region: rows[0].region,
+        });
+      }
+
       return rows.map((row) => ({
-        station_id: row.station_id,
-        name: row.name,
-        address: row.address,
-        city: row.city,
-        latitude: row.latitude,
-        longitude: row.longitude,
-        max_electric_power: row.max_electric_power,
-        price: row.price,
-        price_unit: row.price_unit,
-        status: row.status,
-        status_timestamp: row.status_timestamp,
-        multi_port_charging_allowed: row.multi_port_charging_allowed,
-        availability_status: row.availability_status,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-        cpo_id: row.cpo_id,
-        realtime_enabled: row.realtime_enabled,
-        region: row.region,
+        ...row,
+        price: parseFloat(row.price),
       }));
     } catch (error) {
       console.error("Error fetching stations:", error);
@@ -182,18 +183,28 @@ export class StationModel extends BaseModel {
     }
   }
 
-  async getAllStations(): Promise<Station[]> {
+  async getAllStations(region?: string): Promise<Station[]> {
+    // Convert region to uppercase to match database values
+    const dbRegion = region?.toUpperCase();
+
     const query = `
-      SELECT *
-      FROM stations
-      ORDER BY max_electric_power DESC, city, name, address;
+      SELECT * FROM stations s
+      WHERE latitude IS NOT NULL 
+        AND longitude IS NOT NULL
+        ${dbRegion ? `AND s.region = $1` : ""}
+      ORDER BY price ASC;
     `;
 
     try {
-      const { rows }: QueryResult<Station> = await this.pool.query(query);
-      return rows;
+      console.log("Fetching all stations with region:", dbRegion); // Debug log
+      const { rows } = await this.pool.query(query, dbRegion ? [dbRegion] : []);
+      console.log(`Found ${rows.length} stations for region ${dbRegion}`); // Debug log
+      return rows.map((row) => ({
+        ...row,
+        price: parseFloat(row.price),
+      }));
     } catch (error) {
-      console.error("Error in getAllStations:", error);
+      console.error("Error fetching all stations:", error);
       throw error;
     }
   }

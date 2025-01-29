@@ -44,6 +44,33 @@ app.use(
   })
 );
 
+// Subdomain handling middleware
+app.use((req, res, next) => {
+  const host = req.get("host") || "";
+  const subdomain = host.split(".")[0];
+
+  // Map subdomains to regions (default to 'la' if no subdomain or unknown)
+  const regionMap: { [key: string]: string } = {
+    sf: "sf",
+    la: "la",
+    sd: "sd",
+  };
+
+  // Don't process if it's localhost without subdomain
+  if (host === "localhost:3000") {
+    req.region = regionMap["la"]; // Default to LA
+    return next();
+  }
+
+  // Set region based on subdomain, default to LA
+  req.region = regionMap[subdomain] || regionMap["la"];
+
+  // Log for debugging
+  console.log(`Host: ${host}, Subdomain: ${subdomain}, Region: ${req.region}`);
+
+  next();
+});
+
 const stationController = new StationController(stationModel, pool);
 const stationRouter = createStationRouter(stationController);
 const chatRouter = createChatRouter(stationModel);
@@ -55,7 +82,7 @@ app.use("/api", stationRouter);
 app.use("/", chatRouter);
 
 app.get("/", async (req, res) => {
-  const stations = await stationModel.getAllStations();
+  const stations = await stationModel.getAllStations(req.region);
   const selectedCity = (req.query.city as string) || "all";
 
   const groupedStations = {
@@ -72,7 +99,7 @@ app.get("/about", (req, res) => {
 
 app.get("/map", async (req, res) => {
   try {
-    const stations = await stationController.fetchStationsForMap();
+    const stations = await stationController.fetchStationsForMap(req.region);
     res.send(generateMapView(stations));
   } catch (error) {
     console.error("Error fetching stations for map:", error);

@@ -25,10 +25,23 @@ const CRON_CONFIG = {
   timezone: process.env.CRON_TIMEZONE,
 };
 
-// Search request body
-const searchBody = JSON.stringify({
-  latitude: 34.040428,
-  longitude: -118.465899,
+const regions = [
+  {
+    region: "SF",
+    latitude: 37.735954,
+    longitude: -122.441972,
+  },
+  {
+    region: "LA",
+    latitude: 34.052234,
+    longitude: -118.243685,
+  },
+];
+
+// Search request body template
+const searchBodyTemplate = {
+  latitude: 0,
+  longitude: 0,
   radius: 100,
   limit: 10000,
   offset: 0,
@@ -36,26 +49,40 @@ const searchBody = JSON.stringify({
   recentSearchText: "",
   clearAllFilter: false,
   connectors: [],
-  mappedCpos: ["EVC", "FL2", "GRL", "CPI"],
+  mappedCpos: ["GRL", "EVC", "FL2", "CPI"],
   comingSoon: false,
   status: [],
   excludePricing: true,
-});
+};
 
 // Fetch station data using search endpoint
-async function fetchStationData() {
+async function fetchStationData(latitude, longitude) {
+  const searchBody = {
+    ...searchBodyTemplate,
+    latitude,
+    longitude,
+  };
+
   try {
+    console.log(`Fetching stations for coordinates: ${latitude}, ${longitude}`);
     const response = await fetch(API_CONFIG.search_url, {
       method: "POST",
-      headers: API_CONFIG.headers,
-      body: searchBody,
+      headers: {
+        "Content-Type": "application/json",
+        ...API_CONFIG.headers,
+      },
+      body: JSON.stringify(searchBody),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API Error Response:", errorText);
       throw new Error(`Failed to fetch station data: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log(`Found ${data.data?.length || 0} stations from API`);
+    return data;
   } catch (error) {
     console.error("Error fetching station data:", error);
     throw error;
@@ -192,18 +219,50 @@ async function processStations() {
     // Get list of existing station IDs
     const existingStationIds = await getExistingStationIds(client);
     console.log(
-      `Found ${existingStationIds.size} stations in database that needs status udpate`
+      `Found ${existingStationIds.size} stations in database that needs status update`
     );
 
-    // Fetch all station data at once using search endpoint
-    const searchData = await fetchStationData();
-    const stationData = await collectStationData(searchData);
+    let totalProcessedStations = 0;
+    let totalSavedStations = 0;
 
-    if (stationData.length > 0) {
-      await batchSaveStationStatus(client, stationData, existingStationIds);
-    } else {
-      console.log("No station data to update");
+    // Process each region sequentially
+    for (const region of regions) {
+      try {
+        console.log(`Processing region: ${region.region}`);
+        const searchData = await fetchStationData(
+          region.latitude,
+          region.longitude
+        );
+
+        if (searchData.data && searchData.data.length > 0) {
+          console.log(
+            `Found ${searchData.data.length} stations in ${region.region}`
+          );
+          totalProcessedStations += searchData.data.length;
+
+          const stationData = await collectStationData(searchData);
+          if (stationData.length > 0) {
+            console.log(
+              `Collected ${stationData.length} valid stations in ${region.region}`
+            );
+            await batchSaveStationStatus(
+              client,
+              stationData,
+              existingStationIds
+            );
+            totalSavedStations += stationData.length;
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing region ${region.region}:`, error);
+        // Continue with next region even if this one fails
+      }
     }
+
+    console.log("\nStation Processing Summary:");
+    console.log(`Total stations found: ${totalProcessedStations}`);
+    console.log(`Total stations saved: ${totalSavedStations}`);
+    console.log("Finished processing all stations");
   } catch (error) {
     console.error("Error in processStations:", error);
   } finally {
