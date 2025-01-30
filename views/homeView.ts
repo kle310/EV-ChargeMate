@@ -173,7 +173,7 @@ export const generateHomeView = (
     });
   };
 
-  const content = `
+  const content = /*html*/ `
     <div class="city-selector">
       <select id="citySelector" onchange="window.location.href = '/?city=' + encodeURIComponent(this.value)">
         <option value="" ${
@@ -264,9 +264,9 @@ export const generateHomeView = (
               <div class="station-power">⚡ ${
                 station.max_electric_power
               }kW</div>
-              <div class="station-price paid-tag">💰 $${station.price}/${
-              station.price_unit
-            }</div>
+              <div class="station-price paid-tag">💰 $${station.price.toFixed(
+                2
+              )}/${station.price_unit}</div>
             </div>
             <div class="station-location">
               ${station.address}
