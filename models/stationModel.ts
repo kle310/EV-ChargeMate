@@ -133,31 +133,33 @@ export class StationModel extends BaseModel {
     }
   }
 
-  async getStations(
-    region?: string
+  async getStationsForMap(
+    region?: string,
+    fastOnly: boolean = false
   ): Promise<(Station & { status_timestamp?: Date })[]> {
     // Convert region to uppercase to match database values
     const dbRegion = region?.toUpperCase();
 
     const query = `
-      SELECT 
-        s.*,
-        ls.plug_status AS status,
-        ls.timestamp AS status_timestamp
-      FROM stations s
-      INNER JOIN LATERAL (
-        SELECT plug_status, timestamp
-        FROM station_status ss
-        WHERE ss.station_id = s.station_id
-        ORDER BY ss.timestamp DESC
-        LIMIT 1
-      ) ls ON true
-      WHERE 
-        s.latitude IS NOT NULL 
-        AND s.longitude IS NOT NULL
-        AND LOWER(ls.plug_status) = 'available'
-        ${dbRegion ? `AND s.region = $1` : ""};
-    `;
+    SELECT 
+      s.*,
+      ls.plug_status AS status,
+      ls.timestamp AS status_timestamp
+    FROM stations s
+    INNER JOIN LATERAL (
+      SELECT plug_status, timestamp
+      FROM station_status ss
+      WHERE ss.station_id = s.station_id
+      ORDER BY ss.timestamp DESC
+      LIMIT 1
+    ) ls ON true
+    WHERE 
+      s.latitude IS NOT NULL 
+      AND s.longitude IS NOT NULL
+      ${dbRegion ? `AND s.region = $1` : ""}
+      ${fastOnly ? "" : "AND LOWER(ls.plug_status) = 'available'"}
+      ${fastOnly ? `AND s.max_electric_power > 19` : ""};
+  `;
 
     try {
       console.log("Fetching stations with region:", dbRegion); // Debug log

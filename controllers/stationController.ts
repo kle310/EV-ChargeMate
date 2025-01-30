@@ -43,30 +43,21 @@ export class StationController {
     });
   });
 
-  getStations = catchAsync(
-    async (req: Request, res: Response): Promise<void> => {
-      const stations = await this.stationModel.getStations();
-      res.status(200).json({
-        status: "success",
-        data: stations,
-      });
-    }
-  );
-
   // Non-API method for internal use (like views)
-  async fetchStationsForMap(region?: string): Promise<Station[]> {
+  async fetchStationsForMap(
+    region?: string,
+    fastOnly: boolean = false
+  ): Promise<Station[]> {
     try {
-      const stations = await this.stationModel.getStations(region);
+      const stations = await this.stationModel.getStationsForMap(
+        region,
+        fastOnly
+      );
       return stations;
     } catch (error) {
       console.error("Error fetching stations for map:", error);
       throw error;
     }
-  }
-
-  async getAllStations(): Promise<Station[]> {
-    const result = await this.pool.query("SELECT * FROM stations");
-    return result.rows;
   }
 
   async getStationById(stationId: string): Promise<Station | null> {
@@ -82,27 +73,5 @@ export class StationController {
   ): Promise<StationStatus[]> {
     const status = await this.stationModel.fetchStationAvailability(stationId);
     return status;
-  }
-
-  async getStationStatus(stationId: string): Promise<StationStatus | null> {
-    const result = await this.pool.query(
-      "SELECT * FROM station_status WHERE station_id = $1 ORDER BY timestamp DESC LIMIT 1",
-      [stationId]
-    );
-    return result.rows[0] || null;
-  }
-
-  async getFreeChargers(): Promise<Station[]> {
-    const result = await this.pool.query(
-      "SELECT * FROM stations WHERE price_per_kwh = 0"
-    );
-    return result.rows;
-  }
-
-  async getPaidChargers(): Promise<Station[]> {
-    const result = await this.pool.query(
-      "SELECT * FROM stations WHERE price_per_kwh > 0"
-    );
-    return result.rows;
   }
 }

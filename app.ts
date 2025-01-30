@@ -7,7 +7,6 @@ import { StationController } from "./controllers/stationController";
 import { createStationRouter } from "./routes/stationRoutes";
 import { createChatRouter } from "./routes/chatRoutes";
 import { generateHomeView } from "./views/homeView";
-import { generateAboutView } from "./views/aboutView";
 import { generateChatbotView } from "./views/chatbotView";
 import { generateMapView } from "./views/mapView";
 import { generateDetailedView } from "./views/detailedView";
@@ -99,7 +98,11 @@ app.get("/about", (req, res) => {
 
 app.get("/map", async (req, res) => {
   try {
-    const stations = await stationController.fetchStationsForMap(req.region);
+    const fastOnly = req.query.fastOnly === "true";
+    const stations = await stationController.fetchStationsForMap(
+      req.region,
+      fastOnly
+    );
     res.send(generateMapView(stations));
   } catch (error) {
     console.error("Error fetching stations for map:", error);
