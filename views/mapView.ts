@@ -156,6 +156,28 @@ export const generateMapView = (stations: Station[]): string => {
       border-radius: 4px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+    .station-power {
+      background-color: #f8f9fa;
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #2c3e50;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+    .station-price {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+    .free-tag {
+      background-color: #e8f5e9;
+      color: #2ecc71;
+    }
+    .paid-tag {
+      background-color: #fff8e1;
+      color: #f39c12;
+    }
   `;
 
   const locationGroups = stations.reduce(
@@ -287,10 +309,13 @@ export const generateMapView = (stations: Station[]): string => {
                 stationItem.className = 'station-item';
                 stationItem.innerHTML = \`
                   <h3><a href="/station/\${station.station_id}">\${station.name}</a></h3>
+                  
+                  <p class="station-summary"><span class=\\"station-power\\">\${station.max_electric_power}kW </span>
+                  
+                   \${station.price === 0 ? "<span class=\\"free-tag\\">✓ Free</span>" : "<span class=\\"paid-tag\\">$" + station.price + "/" + station.price_unit}</span>
+                  </p>
                   <p><a href="https://maps.google.com/?q=\${encodeURIComponent(station.address + ', ' + station.city)}" target="_blank">\${station.address}, \${station.city}</a></p>
-                  <p class="station-power">\${station.max_electric_power}kW</p>
-                  <p class="station-price">$\${station.price}/\${station.price_unit}</p>
-                  \${distance ? \`<p class="station-distance">\${distance}km away</p>\` : ''}
+                  
                 \`;
                 stationList.appendChild(stationItem);
               });
