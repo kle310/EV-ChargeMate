@@ -155,8 +155,8 @@ export class StationModel extends BaseModel {
       WHERE 
         s.latitude IS NOT NULL 
         AND s.longitude IS NOT NULL
-        ${dbRegion ? `AND s.region = $1` : ""}
-      ORDER BY s.price ASC;
+        AND LOWER(ls.plug_status) = 'available'
+        ${dbRegion ? `AND s.region = $1` : ""};
     `;
 
     try {
