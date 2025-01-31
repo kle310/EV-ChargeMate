@@ -312,7 +312,7 @@ export const generateMapView = (stations: Station[]): string => {
                   
                   <p class="station-summary"><span class=\\"station-power\\">\${station.max_electric_power}kW </span>
                   
-                   \${station.price === 0 ? "<span class=\\"free-tag\\">✓ Free</span>" : "<span class=\\"paid-tag\\">$" + station.price + "/" + station.price_unit}</span>
+                   \${station.price === 0 ? "<span class=\\"free-tag\\">✓ Free</span>" : "<span class=\\"paid-tag\\">$" + station.price.toFixed(2) + "/" + station.price_unit}</span>
                   </p>
                   <p><a href="https://maps.google.com/?q=\${encodeURIComponent(station.address + ', ' + station.city)}" target="_blank">\${station.address}, \${station.city}</a></p>
                   
