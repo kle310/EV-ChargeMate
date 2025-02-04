@@ -1,34 +1,32 @@
 import { Request, Response } from "express";
 import { StationModel } from "../models/stationModel";
-import { Pool } from "pg";
 import { AppError, catchAsync } from "../middleware/errorHandler";
 import { Station, StationStatus } from "../types/types";
 
+interface StationQuery {
+  station_id?: string;
+  city?: string;
+}
+
 export class StationController {
   private stationModel: StationModel;
-  private pool: Pool;
 
-  constructor(stationModel: StationModel, pool: Pool) {
+  constructor(stationModel: StationModel) {
     this.stationModel = stationModel;
-    this.pool = pool;
   }
 
-  getStatus = catchAsync(async (req: Request, res: Response): Promise<void> => {
-    const stationId = req.query.station_id
-      ? decodeURIComponent(req.query.station_id as string)
-      : undefined;
-    const city = req.query.city
-      ? decodeURIComponent(req.query.city as string).replace(/_/g, " ")
-      : undefined;
+  getStatus = catchAsync(async (req: Request<{}, {}, {}, StationQuery>, res: Response): Promise<void> => {
+    const { station_id, city } = req.query;
+    
+    const stationId = station_id ? decodeURIComponent(station_id) : undefined;
+    const decodedCity = city ? decodeURIComponent(city).replace(/_/g, " ") : undefined;
 
-    if (!stationId && !city) {
-      throw new AppError("Missing station_id or city in URL", 400);
+    if (!stationId && !decodedCity) {
+      throw new AppError("Please provide either station_id or city parameter", 400);
     }
 
-    if (city) {
-      const stationStatuses = await this.stationModel.fetchStationStatusByCity(
-        city
-      );
+    if (decodedCity) {
+      const stationStatuses = await this.stationModel.fetchStationStatusByCity(decodedCity);
       res.status(200).json({
         status: "success",
         data: stationStatuses,
@@ -43,35 +41,39 @@ export class StationController {
     });
   });
 
-  // Non-API method for internal use (like views)
-  async fetchStationsForMap(
+  fetchStationsForMap = async (
     region?: string,
     fastOnly: boolean = false
-  ): Promise<Station[]> {
+  ): Promise<Station[]> => {
     try {
-      const stations = await this.stationModel.getStationsForMap(
-        region,
-        fastOnly
-      );
-      return stations;
+      return await this.stationModel.getStationsForMap(region, fastOnly);
     } catch (error) {
-      console.error("Error fetching stations for map:", error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new AppError(`Failed to fetch stations for map: ${errorMessage}`, 500);
     }
-  }
+  };
 
-  async getStationById(stationId: string): Promise<Station | null> {
-    const result = await this.pool.query(
-      "SELECT * FROM stations WHERE station_id = $1",
-      [stationId]
-    );
-    return result.rows[0] || null;
-  }
+  getStationById = async (stationId: string): Promise<Station> => {
+    if (!stationId) {
+      throw new AppError('Station ID is required', 400);
+    }
 
-  async getStationAvailabilityHistory(
+    const station = await this.stationModel.getStationById(stationId);
+    
+    if (!station) {
+      throw new AppError(`Station with ID ${stationId} not found`, 404);
+    }
+
+    return station;
+  };
+
+  getStationAvailabilityHistory = async (
     stationId: string
-  ): Promise<StationStatus[]> {
-    const status = await this.stationModel.fetchStationAvailability(stationId);
-    return status;
-  }
+  ): Promise<StationStatus[]> => {
+    if (!stationId) {
+      throw new AppError('Station ID is required', 400);
+    }
+
+    return await this.stationModel.fetchStationAvailability(stationId);
+  };
 }
