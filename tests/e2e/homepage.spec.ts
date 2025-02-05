@@ -13,6 +13,7 @@ test("homepage has title", async ({ page }) => {
 test("can filter by city", async ({ page }) => {
   await expect(page.locator("#citySelector")).toBeVisible();
   await expect(page.locator("#citySelector")).toHaveValue("");
+  await page.locator("#citySelector").click();
   await page.locator("#citySelector").selectOption("monterey_park");
   await expect(page.locator("body")).toContainText("Monterey Park");
   await expect(page.locator("body")).toContainText("$0.20/kWh");
