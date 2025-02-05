@@ -15,9 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
       - name: Install dependencies
         run: |
-          npm install
+          npm ci
 
       - name: Set up environment variables from secrets and start the server
         run: |
@@ -39,11 +44,12 @@ jobs:
           npm run test
 
       - name: Upload Playwright artifacts
-        if: failure()
         uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
-          name: playwright-artifacts
-          path: playwright-report
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
 
   deploy-to-production:
     if: github.ref == 'refs/heads/main'
