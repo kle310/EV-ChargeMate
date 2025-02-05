@@ -214,18 +214,25 @@ export class StationModel extends BaseModel {
   async fetchStationStatusByCity(city: string): Promise<StationStatus[]> {
     const query = `
     SELECT 
-      DISTINCT ON (s.station_id) 
       s.station_id,
-      ss.plug_type,
-      ss.plug_status,
-      ss.timestamp
-    FROM station_status ss
-    INNER JOIN stations s ON s.station_id = ss.station_id
+      latest_status.plug_type,
+      latest_status.plug_status,
+      latest_status.timestamp
+    FROM stations s
+    CROSS JOIN LATERAL (
+      SELECT 
+        plug_type,
+        plug_status,
+        timestamp
+      FROM station_status
+      WHERE station_id = s.station_id
+      ORDER BY timestamp DESC
+      LIMIT 1
+    ) latest_status
     WHERE 
-      (LOWER($1) = 'all' AND LOWER(ss.plug_status) = 'available')
+      (LOWER($1) = 'all' AND LOWER(latest_status.plug_status) = 'available')
       OR 
-      (LOWER($1) != 'all' AND LOWER(s.city) = LOWER($1))
-    ORDER BY s.station_id, ss.timestamp DESC;
+      (LOWER($1) != 'all' AND LOWER(s.city) = LOWER($1));
   `;
 
     try {
@@ -236,6 +243,17 @@ export class StationModel extends BaseModel {
       return rows;
     } catch (error) {
       console.error("Error fetching station status by city:", error);
+      throw error;
+    }
+  }
+
+  async getStationById(stationId: string): Promise<Station | null> {
+    const query = "SELECT * FROM stations WHERE station_id = $1";
+    try {
+      const result = await this.pool.query(query, [stationId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error(`Error fetching station by ID ${stationId}:`, error);
       throw error;
     }
   }
