@@ -7,12 +7,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("homepage has title", async ({ page }) => {
-  // Assert that the page title is correct
   await expect(page).toHaveTitle("Home - EV ChargeMate");
 });
 
 test("can filter by city", async ({ page }) => {
-  // Assert that the page title is correct
+  await expect(page.locator("#citySelector")).toBeVisible();
+  await expect(page.locator("#citySelector")).toHaveValue("");
   await page.locator("#citySelector").selectOption("monterey_park");
   await expect(page.locator("body")).toContainText("Monterey Park");
   await expect(page.locator("body")).toContainText("$0.20/kWh");
