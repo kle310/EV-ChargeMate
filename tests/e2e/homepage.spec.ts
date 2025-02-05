@@ -21,3 +21,18 @@ test("can filter by city", async ({ page }) => {
     "4100 Market Place Drive, Suite EV"
   );
 });
+
+test("can load city directly", async ({ page }) => {
+  await page.goto("/?city=monterey_park");
+  await expect(page.locator("body")).toContainText("Monterey Park");
+  await expect(page.locator("body")).toContainText("$0.20/kWh");
+  await expect(page.locator("body")).toContainText(
+    "4100 Market Place Drive, Suite EV"
+  );
+  await expect(page.locator("#status-153420")).toContainText(
+    /AVAILABLE|IN USE/,
+    {
+      timeout: 30000,
+    }
+  );
+});
