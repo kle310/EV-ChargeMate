@@ -28,10 +28,10 @@ jobs:
       - name: Set up environment variables from secrets and start the server
         run: |
           export DB_HOST=${{ secrets.DB_HOST }}
+          export DB_PORT=${{ secrets.DB_PORT }}
+          export DB_NAME=${{ secrets.DB_NAME }}
           export DB_USER=${{ secrets.DB_USER }}
           export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          export DB_NAME=${{ secrets.DB_DATABASE }}
-          export DB_PORT=${{ secrets.DB_PORT }}
           export DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
           npm run start &
           echo "Server started"
