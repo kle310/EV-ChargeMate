@@ -27,6 +27,7 @@ jobs:
 
       - name: Set up environment variables from secrets and start the server
         run: |
+          echo "DB_HOST: ${{ secrets.DB_NAME }}"
           export DB_HOST=${{ secrets.DB_HOST }}
           export DB_PORT=${{ secrets.DB_PORT }}
           export DB_NAME=${{ secrets.DB_NAME }}
