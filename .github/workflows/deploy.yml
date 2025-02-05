@@ -9,6 +9,7 @@ on:
 jobs:
   run-playwright-tests-on-staging:
     if: github.ref == 'refs/heads/staging'
+    environment: staging
     runs-on: ubuntu-latest
 
     steps:
