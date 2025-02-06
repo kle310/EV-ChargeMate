@@ -188,7 +188,7 @@ export const generateHeader = (activePage: string): string => {
       <div class="header">
         <div class="logo-title">
           <a href="/" class="logo-link">
-            <img src="/images/chargemate-logo.png" alt="ChargeMate Logo" class="logo">
+            <img src="/images/chargemate-logo.jpeg" alt="ChargeMate Logo" class="logo">
           </a>
           <h1>EV ChargeMate</h1>
         </div>
