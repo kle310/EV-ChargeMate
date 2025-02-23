@@ -199,9 +199,6 @@ export const generateHeader = (activePage: string): string => {
           <a href="/map" class="nav-link${
             activePage === "map" ? " active" : ""
           }">Map</a>
-          <a href="/chat" class="nav-link${
-            activePage === "chat" ? " active" : ""
-          }">Chat</a>
         </nav>
       </div>
     </div>
