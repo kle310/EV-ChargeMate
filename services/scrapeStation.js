@@ -115,7 +115,7 @@ async function processStation(client, station, region) {
       }
 
       // Skip if price per kWh is too high (likely an error or premium station)
-      if (price > 0.25) {
+      if (price > 0.3) {
         console.log(
           `Skipping EVSE due to high price: $${price.toFixed(
             3
