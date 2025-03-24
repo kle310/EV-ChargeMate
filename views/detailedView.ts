@@ -214,6 +214,21 @@ export const generateDetailedView = (
         width: 100%;
       }
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: center;
+      padding: 8px;
+      font-size: 0.8em; /* 1 pixel smaller */
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
   `;
 
   const content = `
@@ -476,7 +491,7 @@ export const generateDetailedView = (
                     : "";
 
                 const startTimeStr = row.timestamp.toLocaleTimeString("en-US", {
-                  weekday: "long",
+                  weekday: "short",
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
