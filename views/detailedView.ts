@@ -251,14 +251,14 @@ export const generateDetailedView = (
             </a>
           </div>
           <a href="/station/${station.station_id}/live" class="status-link ${
-            !availability || availability.length === 0
-              ? "loading"
-              : availability[0]?.plug_status === "AVAILABLE"
-              ? "available"
-              : availability[0]?.plug_status === "BUSY"
-              ? "busy"
-              : "unknown"
-          }">
+    !availability || availability.length === 0
+      ? "loading"
+      : availability[0]?.plug_status === "AVAILABLE"
+      ? "available"
+      : availability[0]?.plug_status === "BUSY"
+      ? "busy"
+      : "unknown"
+  }">
             ${
               !availability || availability.length === 0
                 ? "Loading..."
@@ -454,7 +454,7 @@ export const generateDetailedView = (
           </thead>
           <tbody>
             ${(() => {
-              const MAX_ROWS = 12; // Limit for rows to return
+              const MAX_ROWS = 100; // Limit for rows to return
               let table = "";
               let isFirstRow = true;
               let rowCount = 0;
