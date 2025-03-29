@@ -427,6 +427,39 @@ export const generateDetailedView = (
                 }
               });
 
+              // Normalize today's usage to not exceed the elapsed time of the current day
+              const now = new Date();
+              const minutesElapsedToday =
+                now.getHours() * 60 + now.getMinutes();
+
+              Object.keys(dayUsage).forEach((day) => {
+                if (
+                  day === now.toLocaleDateString("en-US", { weekday: "long" })
+                ) {
+                  // Only count "BUSY" durations for today
+                  const todayBusyMinutes = chargingSessions
+                    .filter((status) => {
+                      const statusDate = new Date(status.timestamp);
+                      return (
+                        statusDate.toLocaleDateString("en-US", {
+                          weekday: "long",
+                        }) === day
+                      );
+                    })
+                    .reduce((sum, status) => sum + (status.duration || 0), 0);
+
+                  dayUsage[day as keyof typeof dayUsage] = Math.min(
+                    todayBusyMinutes,
+                    minutesElapsedToday
+                  );
+                } else {
+                  dayUsage[day as keyof typeof dayUsage] = Math.min(
+                    dayUsage[day as keyof typeof dayUsage],
+                    1440
+                  );
+                }
+              });
+
               // Determine activity level based on total sessions
               let activityLevel: "low" | "moderate" | "busy";
               if (chargingSessions.length < 70) {
@@ -437,12 +470,8 @@ export const generateDetailedView = (
                 activityLevel = "busy";
               }
 
-              const maxUsage = 1440;
-
               return Object.entries(dayUsage)
                 .map(([day, minutes]) => {
-                  const percentage =
-                    maxUsage > 0 ? (minutes / maxUsage) * 100 : 0;
                   const hours = (minutes / 60).toFixed(1);
                   return `
                     <div class="stat-card">
@@ -455,7 +484,6 @@ export const generateDetailedView = (
             })()}
           </div>
         </div>
-      </div>
 
       <div class="chart-section">
         <h2 class="chart-title">Recent Status History</h2>
